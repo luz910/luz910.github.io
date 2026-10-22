@@ -1,0 +1,49 @@
+# Publica el sitio en GitHub Pages cada vez que se suben cambios a la rama main.
+# Requiere: Settings → Pages → Source: "GitHub Actions"
+# y las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en Settings → Secrets and variables → Actions → Variables.
+# Nota: el repositorio debe llamarse TU-USUARIO.github.io para que el sitio quede en la raíz de la dirección.
+name: Publicar en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_EDITOR_EMAIL: ${{ vars.VITE_EDITOR_EMAIL }}
+      # Para que las direcciones internas (/cursos, /articulos/…) funcionen al recargar o compartir
+      - run: cp dist/index.html dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

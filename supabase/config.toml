@@ -1,0 +1,8 @@
+# Configuración de las Edge Functions de BIOQUNS.
+# La verificación del usuario se hace dentro de cada función (no en la puerta de entrada),
+# porque "newsletter" la usan visitantes sin cuenta y "admin" también la llama el cron.
+[functions.newsletter]
+verify_jwt = false
+
+[functions.admin]
+verify_jwt = false
