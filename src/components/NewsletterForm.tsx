@@ -65,7 +65,8 @@ export function NewsletterForm({ variant = 'band', showInterests = false, headin
     // Franja: texto a la izquierda y correo + botón a la derecha, alineados al centro; consentimiento debajo.
     return (
       <form onSubmit={submit} noValidate className="grid gap-x-10 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-center">
-        <div>
+        {/* El texto ocupa las dos filas de la derecha: así la franja mide lo mismo aunque el texto tenga 1 o 2 renglones */}
+        <div className="lg:row-span-2">
           {heading && <h2 className="h-display text-xl text-petrol-deep">{heading}</h2>}
           {text && <p className="mt-1 text-sm text-ink-soft">{text}</p>}
         </div>
@@ -78,7 +79,7 @@ export function NewsletterForm({ variant = 'band', showInterests = false, headin
           <input tabIndex={-1} aria-hidden className="hidden" value={hp} onChange={(e) => setHp(e.target.value)} name="website" autoComplete="off" />
           <button className="btn-dark" disabled={state.kind === 'sending'}>{state.kind === 'sending' ? 'Enviando…' : n.button}</button>
         </div>
-        <div className="lg:col-start-2">
+        <div className="lg:col-start-2 lg:row-start-2">
           {consentBox}
           {state.kind === 'error' && (
             <p role="alert" className="mt-2 flex items-center gap-2 text-sm text-red-700"><AlertCircle className="h-4 w-4" aria-hidden /> {state.msg}</p>

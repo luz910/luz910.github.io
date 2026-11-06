@@ -15,10 +15,23 @@ function Hero() {
   // La portada ya no se edita desde el panel: se usan siempre los textos definidos acá.
   void settings;
   const h = DEFAULT_SETTINGS.home;
+  const heroSrc = h.hero_image_url || '/brand/portada.jpg';
+  // La animación espera a que estén listas las letras y la foto (como mucho 1 segundo), así no se traba.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let done = false;
+    const go = () => { if (!done) { done = true; requestAnimationFrame(() => requestAnimationFrame(() => setReady(true))); } };
+    const img = new Image();
+    img.src = heroSrc;
+    const fonts = (document as Document & { fonts?: FontFaceSet }).fonts?.ready ?? Promise.resolve();
+    Promise.all([fonts, img.decode ? img.decode().catch(() => {}) : Promise.resolve()]).then(go);
+    const t = setTimeout(go, 1000);
+    return () => { done = true; clearTimeout(t); };
+  }, [heroSrc]);
   return (
-    <section className="relative overflow-hidden bg-white">
+    <section className={`relative overflow-hidden bg-white ${ready ? '' : 'hero-wait'}`}>
       {/* Imagen de fondo (editable desde el panel) con un velo blanco para que el texto se lea bien */}
-      <img src={h.hero_image_url || '/brand/portada.jpg'} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center hero-zoom" />
+      <img src={heroSrc} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center hero-zoom" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.93)_0%,rgba(255,255,255,0.87)_50%,rgba(255,255,255,0.8)_100%)]" aria-hidden />
       <div className="container-x relative flex flex-col items-center pb-16 pt-16 text-center sm:pb-20 sm:pt-24">
         <h1 className="flex items-center justify-center gap-3 sm:gap-5">
@@ -78,7 +91,7 @@ function Novedades() {
     <section className="bg-white pb-4 pt-14">
       <div className="container-x">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-display text-2xl font-extrabold uppercase leading-tight tracking-[0.01em] text-brown sm:text-3xl">Novedades</h2>
+          <h2 className="font-display text-[1.2rem] font-extrabold uppercase leading-tight tracking-[0.01em] text-brown sm:text-[1.45rem]">Novedades</h2>
           <div className="flex gap-5 text-sm font-semibold">
             <Link to="/cursos" className="inline-flex items-center gap-1 text-orange-deep hover:underline">Todos los cursos <ArrowRight className="h-4 w-4" aria-hidden /></Link>
             <Link to="/articulos" className="inline-flex items-center gap-1 text-orange-deep hover:underline">Todos los artículos <ArrowRight className="h-4 w-4" aria-hidden /></Link>
@@ -109,17 +122,17 @@ function CtaCursos() {
   return (
     <section className="-mb-24 bg-white pb-28 pt-10">
       <div className="container-x">
-        <div ref={ref} className={`cta-card relative overflow-hidden rounded-3xl border border-[#f6dcc3] bg-[linear-gradient(90deg,#fdbf7e_0%,#fdd2a6_14%,#fde6cf_34%,#fdeedf_60%,#fdf1e4_100%)] px-6 py-12 text-center shadow-[0_18px_44px_-26px_rgba(242,105,20,0.45)] sm:px-12 sm:py-14 ${visible ? 'is-visible' : ''}`}>
+        <div ref={ref} className={`cta-card relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-[#f6dcc3] bg-[linear-gradient(90deg,#fdbf7e_0%,#fdd2a6_14%,#fde6cf_34%,#fdeedf_60%,#fdf1e4_100%)] px-6 py-8 text-center shadow-[0_18px_44px_-26px_rgba(242,105,20,0.45)] sm:px-10 sm:py-9 ${visible ? 'is-visible' : ''}`}>
           {/* Curvas suaves decorativas a la izquierda */}
           <span aria-hidden className="pointer-events-none absolute -left-[22%] -top-[60%] h-[220%] w-[48%] rounded-[50%] bg-[#fdc28a]/45" />
           <span aria-hidden className="pointer-events-none absolute -left-[30%] -top-[40%] h-[200%] w-[52%] rounded-[50%] border border-white/50" />
           <span aria-hidden className="pointer-events-none absolute -left-[8%] top-[10%] h-[160%] w-[30%] rounded-[50%] bg-white/15" />
           <span aria-hidden className="cta-sheen pointer-events-none absolute inset-y-0 -left-1/3 w-1/3" />
-          <h2 className="relative font-display text-[clamp(1.6rem,3.6vw,2.6rem)] leading-tight">
+          <h2 className="relative font-display text-[clamp(1.25rem,2.8vw,2rem)] leading-tight">
             <span className="cta-l1 inline-block font-extrabold text-[#5a250f]">Actualizá tus conocimientos.</span><br className="hidden sm:block" /> <span className="cta-l2 cta-glow inline-block font-extrabold">Potenciá tu futuro.</span>
           </h2>
-          <div className="cta-btn relative mt-8">
-            <Link to="/cursos" className="cta-pulse group inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#fba25f] bg-[#f26914] px-8 py-3.5 font-display text-base font-extrabold uppercase tracking-[0.06em] text-white shadow-[0_8px_20px_-8px_rgba(242,105,20,0.7)] transition hover:-translate-y-0.5 hover:bg-[#d95a0c]">
+          <div className="cta-btn relative mt-5">
+            <Link to="/cursos" className="cta-pulse group inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#fba25f] bg-[#f26914] px-6 py-2.5 font-display text-sm font-extrabold uppercase tracking-[0.06em] text-white shadow-[0_8px_20px_-8px_rgba(242,105,20,0.7)] transition hover:-translate-y-0.5 hover:bg-[#d95a0c]">
               Quiero capacitarme <ArrowRight className="cta-arrow h-4 w-4" aria-hidden />
             </Link>
           </div>

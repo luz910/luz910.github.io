@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { useDistinct, usePublicInfinite } from '../lib/api';
+import { usePublicInfinite } from '../lib/api';
 import type { Article } from '../lib/types';
 import { ArticleCard } from '../components/Cards';
 import { Empty, ErrorBox, LoadMore, PageHeader, SkeletonGrid } from '../components/ui';
@@ -13,7 +13,6 @@ export default function Articles() {
   const q = params.get('q') ?? '';
   const cat = params.get('categoria') ?? '';
   const search = useDebounced(q, 350);
-  const cats = useDistinct('articles', 'category');
   const list = usePublicInfinite<Article>('articles', {
     search, searchCols: ['title', 'excerpt', 'summary', 'authors', 'category'], eq: { category: cat },
     order: [{ col: 'published_at' }],
@@ -33,18 +32,12 @@ export default function Articles() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
             <input id="buscar" type="search" className="input border-transparent bg-mist pl-9" placeholder="Buscar por título, autor o tema…" value={q} onChange={(e) => set('q', e.target.value)} />
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por categoría">
-            <button className={`chip px-3 py-1.5 ${!cat ? 'bg-ink text-white' : 'hover:bg-line'}`} aria-pressed={!cat} onClick={() => set('categoria', '')}>Todas</button>
-            {cats.data?.map((c) => (
-              <button key={c} className={`chip px-3 py-1.5 ${cat === c ? 'bg-ink text-white' : 'hover:bg-line'}`} aria-pressed={cat === c} onClick={() => set('categoria', c)}>{c}</button>
-            ))}
-          </div>
         </div>
         <div className="mb-10 rounded-2xl bg-petrol-soft p-6">
           <NewsletterForm variant="strip" topic="articulos" heading="Recibí los nuevos artículos" text="No te pierdas lo nuevo en bioquímica y ciencias de la salud." />
         </div>
         {list.isLoading ? <SkeletonGrid /> : list.error ? <ErrorBox error={list.error} /> : rows.length === 0 ? (
-          <Empty title={q || cat ? 'No encontramos artículos con esos criterios' : 'Todavía no hay artículos publicados'} text={q || cat ? 'Probá con otras palabras o quitá el filtro.' : undefined} />
+          <Empty title={q ? 'No encontramos artículos con esos criterios' : 'Todavía no hay artículos publicados'} text={q ? 'Probá con otras palabras o quitá el filtro.' : undefined} />
         ) : (
           <>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{rows.map((a) => <ArticleCard key={a.id} a={a} />)}</div>

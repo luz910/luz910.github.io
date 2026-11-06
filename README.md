@@ -69,7 +69,7 @@ La contraseña **no está en el código**: se carga directamente en Supabase.
 
 > **Importante:** `25/10/01` es una contraseña corta y adivinable. Usala solo para el primer ingreso y cambiala en **Panel → tu correo (abajo a la izquierda) → Cambiar contraseña**. Además de la contraseña, la app usa sesiones seguras de Supabase, verifica el rol de editor en el servidor en cada operación y bloquea intentos repetidos de inicio de sesión.
 
-Más editores: **Panel → Configuración general → Editores**. Un administrador puede crear accesos individuales, asignar rol y revocarlos. Cada persona cambia su contraseña desde su cuenta, o con "Olvidé mi contraseña" en la pantalla de acceso.
+Más editores: **Panel → Editores**. Un administrador puede crear accesos individuales, asignar rol y revocarlos. Cada persona cambia su contraseña desde su cuenta, o con "Olvidé mi contraseña" en la pantalla de acceso.
 
 ---
 
@@ -137,7 +137,7 @@ Abrí `supabase/sql/programar_envios_automaticos.sql`, reemplazá `TU-PROYECTO` 
 3. Configuración de compilación: *Framework preset*: **Vite** · *Build command*: `npm run build` · *Output directory*: `dist`.
 4. **Environment variables** (Production y Preview): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y, si querés, `VITE_EDITOR_EMAIL`. Las usan tanto el sitio como las funciones de SEO.
 5. **Save and Deploy**. Vas a obtener una dirección `https://bioquns-web.pages.dev`.
-6. **Dominio propio:** en el proyecto de Pages → **Custom domains → Set up a domain**. Luego cargá esa dirección en **Panel → Configuración general → Dirección pública del sitio**, en el secreto `SITE_URL` y en Supabase → Authentication → URL Configuration.
+6. **Dominio propio:** en el proyecto de Pages → **Custom domains → Set up a domain**. Luego cargá esa dirección en el secreto `SITE_URL` y en Supabase → Authentication → URL Configuration.
 7. Registrá el sitio en **Google Search Console** y enviá `https://tudominio/sitemap.xml`.
 
 Cada `git push` vuelve a publicar el código. El **contenido** se actualiza desde el panel, sin desplegar nada.
