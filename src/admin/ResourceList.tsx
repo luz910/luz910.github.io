@@ -21,6 +21,7 @@ export default function ResourceList() {
 }
 
 function ListInner({ r }: { r: Resource }) {
+  const thumbField = r.fields.find((f) => f.type === 'image' && ['cover_url', 'thumbnail_url', 'photo_url'].includes(f.name))?.name;
   const qc = useQueryClient();
   const toast = useToast();
   const [q, setQ] = useState('');
@@ -117,7 +118,7 @@ function ListInner({ r }: { r: Resource }) {
                     <button className="rounded p-0.5 text-mute hover:bg-mist disabled:opacity-20" disabled={i === rows.length - 1} onClick={() => reorder(i, 1)} aria-label="Bajar en el orden"><ArrowDown className="h-4 w-4" /></button>
                   </div>
                 )}
-                {(row.cover_url || row.thumbnail_url || row.photo_url) && <img src={row.cover_url || row.thumbnail_url || row.photo_url} alt="" className="hidden h-12 w-16 shrink-0 rounded-md object-cover sm:block" />}
+                {thumbField && row[thumbField] && <img src={row[thumbField]} alt="" className="hidden h-12 w-16 shrink-0 rounded-md object-cover sm:block" />}
                 <div className="min-w-0 flex-1">
                   <Link to={`/admin/${r.key}/${row.id}`} className="font-semibold text-ink hover:text-orange-deep">{row[r.titleField]}</Link>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-mute">

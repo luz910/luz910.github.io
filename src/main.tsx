@@ -4,6 +4,8 @@ import { createBrowserRouter, createHashRouter, RouterProvider } from 'react-rou
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@fontsource-variable/manrope';
 import '@fontsource-variable/newsreader';
+import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource-variable/montserrat';
 import './index.css';
 import { AuthProvider } from './lib/auth';
 import App from './App';

@@ -18,7 +18,7 @@ function MemberCard({ m }: { m: Member }) {
         {m.photo_url
           ? <img src={m.photo_url} alt={m.photo_alt || m.name} className="mx-auto h-40 w-40 rounded-full object-cover shadow-lg ring-4 ring-white" />
           : <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-full bg-white shadow-inner ring-4 ring-white"><DnaSymbol spin={false} className="h-20 w-auto opacity-40" /></div>}
-        <h3 className="mt-5 font-serif text-2xl text-ink">{m.name}</h3>
+        <h3 className="mt-5 font-display font-bold text-2xl text-ink">{m.name}</h3>
         {m.role && <p className="mt-1 text-sm font-bold text-orange-deep">{m.role}</p>}
       </div>
       <div className="flex-1 space-y-5 p-6 text-sm">
@@ -44,15 +44,8 @@ export default function About() {
       <Seo title={a.title} description={settings.general.default_seo_description} />
       <PageHeader eyebrow="Institucional" title={a.title} />
       <div className="container-x py-14">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr]">
-          <Markdown className="text-lg">{a.intro}</Markdown>
-          {a.mission && (
-            <aside className="h-fit rounded-3xl bg-ink p-8 text-white">
-              <DnaSymbol className="h-14 w-auto" />
-              <h2 className="mt-4 font-serif text-2xl">{a.mission_title}</h2>
-              <Markdown className="mt-3 !text-white/80">{a.mission}</Markdown>
-            </aside>
-          )}
+        <div className="relative overflow-hidden rounded-3xl bg-[#f2f6f8] p-8 sm:p-12">
+          <Markdown className="relative max-w-4xl text-lg leading-relaxed [&_p:first-child]:text-xl [&_p:first-child]:text-ink">{a.intro}</Markdown>
         </div>
         <section className="mt-20">
           <h2 className="h-display mb-8 text-center text-3xl">{a.team_title}</h2>

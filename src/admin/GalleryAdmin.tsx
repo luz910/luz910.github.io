@@ -10,7 +10,7 @@ export default function GalleryAdmin() {
   const qc = useQueryClient();
   const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [batch, setBatch] = useState({ event_label: '', year: new Date().getFullYear(), congress_id: '' });
+  const [batch, setBatch] = useState({ year: new Date().getFullYear(), congress_id: '' });
   const [progress, setProgress] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [del, setDel] = useState<Photo | null>(null);
@@ -34,8 +34,8 @@ export default function GalleryAdmin() {
       try {
         const url = await uploadFile(f, 'galeria');
         const { error } = await supabase.from('gallery_photos').insert({
-          image_url: url, title: f.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '), alt: '', status: 'published',
-          event_label: batch.event_label || null, year: batch.year || null, congress_id: batch.congress_id || null, sort_order: startOrder + i * 10,
+          image_url: url, title: null, alt: '', status: 'published',
+          event_label: null, year: batch.year || null, congress_id: batch.congress_id || null, sort_order: startOrder + i * 10,
         });
         if (error) throw error;
         ok++;
@@ -73,7 +73,7 @@ export default function GalleryAdmin() {
   const all = photos.data ?? [];
   const groups = new Map<string, Photo[]>();
   for (const p of all) {
-    const key = `${p.year ?? 'Sin año'} · ${p.event_label || congresses.data?.find((c: any) => c.id === p.congress_id)?.name || 'Sin evento'}`;
+    const key = `${p.year ?? 'Sin año'}`;
     if (filter && !key.toLowerCase().includes(filter.toLowerCase())) continue;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(p);
@@ -82,14 +82,13 @@ export default function GalleryAdmin() {
   return (
     <div>
       <h1 className="text-2xl font-extrabold text-ink">Galería de fotografías</h1>
-      <p className="mt-1 text-sm text-mute">Subí varias fotos a la vez. Se organizan por año y evento en el sitio.</p>
+      <p className="mt-1 text-sm text-mute">Subí varias fotos a la vez. En el sitio se organizan por año.</p>
 
       <section className="mt-6 rounded-xl border border-line bg-white p-5">
         <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-petrol">Subir fotografías</h2>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_8rem_1fr_auto] md:items-end">
-          <div><label className="label" htmlFor="g-ev">Evento o actividad</label><input id="g-ev" className="input" placeholder="Ej.: Jornadas de Bioquímica" value={batch.event_label} onChange={(e) => setBatch({ ...batch, event_label: e.target.value })} /></div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[8rem_minmax(0,1fr)_auto] md:items-end">
           <div><label className="label" htmlFor="g-y">Año</label><input id="g-y" type="number" className="input" value={batch.year} onChange={(e) => setBatch({ ...batch, year: Number(e.target.value) })} /></div>
-          <div><label className="label" htmlFor="g-c">Vincular a un congreso (opcional)</label>
+          <div><label className="label" htmlFor="g-c">Vincular a una actividad científica o académica (opcional)</label>
             <select id="g-c" className="input" value={batch.congress_id} onChange={(e) => setBatch({ ...batch, congress_id: e.target.value })}>
               <option value="">— Ninguno —</option>{congresses.data?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -99,7 +98,7 @@ export default function GalleryAdmin() {
         </div>
       </section>
 
-      <input className="input mt-6 max-w-sm" placeholder="Filtrar por año o evento…" aria-label="Filtrar galería" value={filter} onChange={(e) => setFilter(e.target.value)} />
+      <input className="input mt-6 max-w-sm" placeholder="Filtrar por año…" aria-label="Filtrar galería" value={filter} onChange={(e) => setFilter(e.target.value)} />
 
       {photos.isLoading ? <p className="mt-6 text-sm text-mute">Cargando…</p> : groups.size === 0 ? <p className="mt-6 rounded-xl border border-dashed border-line bg-white p-10 text-center text-sm text-mute">Todavía no hay fotos.</p> : (
         [...groups.entries()].map(([g, list]) => (
@@ -127,15 +126,11 @@ function PhotoCard({ p, first, last, onMove, onSave, onReplace, onDelete, congre
         {!p.alt && <span className="absolute left-2 top-2 rounded bg-amber-100 px-2 py-0.5 text-[0.7rem] font-bold text-amber-900">Falta texto alternativo</span>}
       </div>
       <div className="space-y-2 p-3 text-sm">
-        <input className="input !py-1.5" placeholder="Título" aria-label="Título" value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} />
-        <textarea className="input !py-1.5" rows={2} placeholder="Descripción" aria-label="Descripción" value={d.description} onChange={(e) => setD({ ...d, description: e.target.value })} />
-        <input className="input !py-1.5" placeholder="Texto alternativo (qué se ve en la foto)" aria-label="Texto alternativo" value={d.alt} onChange={(e) => setD({ ...d, alt: e.target.value })} />
-        <div className="grid grid-cols-[1fr_5rem] gap-2">
-          <input className="input !py-1.5" placeholder="Evento" aria-label="Evento" value={d.event_label} onChange={(e) => setD({ ...d, event_label: e.target.value })} />
+        <div className="grid grid-cols-[5rem] gap-2">
           <input className="input !py-1.5" type="number" placeholder="Año" aria-label="Año" value={d.year} onChange={(e) => setD({ ...d, year: e.target.value as any })} />
         </div>
         <select className="input !py-1.5" aria-label="Congreso" value={d.congress_id} onChange={(e) => setD({ ...d, congress_id: e.target.value })}>
-          <option value="">— Sin congreso vinculado —</option>{congresses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <option value="">— Sin actividad vinculada —</option>{congresses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <div className="flex items-center gap-1 pt-1">
           <button className="rounded p-1.5 text-mute hover:bg-mist disabled:opacity-30" disabled={first} onClick={() => onMove(-1)} aria-label="Mover antes"><ArrowLeft className="h-4 w-4" /></button>

@@ -423,12 +423,12 @@ insert into public.settings (key, value) values
 )),
 ('home', jsonb_build_object(
   'hero_kicker', 'Bioquímica · Docencia · Ciencia',
-  'hero_title', 'Formación y divulgación en bioquímica',
-  'hero_text', 'Cursos de actualización profesional, artículos de interés, publicaciones científicas y participación en congresos. [Reemplazá este texto desde el panel de editores.]',
+  'hero_title', 'Impulsá tu crecimiento profesional.',
+  'hero_text', 'Bioquns es un espacio dedicado a la educación a distancia, para profesionales que desean mantenerse actualizados en el ámbito bioquímico y de la salud.',
   'hero_image_url', '',
   'hero_primary_label', 'Ver cursos',
   'hero_primary_url', '/cursos',
-  'hero_secondary_label', 'Leer artículos',
+  'hero_secondary_label', 'Explorar artículos',
   'hero_secondary_url', '/articulos',
   'about_title', 'Qué es BIOQUNS',
   'about_text', '[Completá aquí una breve presentación institucional de BIOQUNS desde el panel de editores.]',
@@ -438,7 +438,6 @@ insert into public.settings (key, value) values
   'courses_cta_label', 'Ver cursos y programas',
   'courses_cta_url', '/cursos',
   'sections', jsonb_build_array(
-     jsonb_build_object('id','accesos','visible',true),
      jsonb_build_object('id','cursos','visible',true),
      jsonb_build_object('id','articulos','visible',true),
      jsonb_build_object('id','presentacion','visible',true),
@@ -454,7 +453,7 @@ insert into public.settings (key, value) values
   'team_title', 'Responsables'
 )),
 ('footer', jsonb_build_object(
-  'description', 'Bioquímica, docencia universitaria, divulgación científica y formación profesional continua.',
+  'description', 'Educación a distancia y actualización profesional continua.',
   'email', '',
   'phone', '',
   'address', '',
@@ -472,7 +471,7 @@ insert into public.settings (key, value) values
 )),
 ('newsletter', jsonb_build_object(
   'title', 'Recibí novedades de BIOQUNS',
-  'text', 'Enterate de nuevos cursos de actualización profesional, artículos de interés y publicaciones científicas directamente en tu correo.',
+  'text', 'Sé un profesional actualizado. Recibí novedades del ámbito bioquímico, contenidos de interés profesional y todas las novedades sobre nuestros próximos cursos y actividades de formación.',
   'button', 'Suscribirme',
   'consent', 'Acepto recibir correos de BIOQUNS con novedades. Puedo darme de baja en cualquier momento.',
   'auto_article', true,

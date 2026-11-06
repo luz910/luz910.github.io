@@ -27,11 +27,11 @@ export interface SiteSettings {
 export const DEFAULT_SETTINGS: SiteSettings = {
   general: { site_name: 'BIOQUNS', site_url: '', tagline: 'Bioquímica, docencia y actualización profesional', default_seo_description: '' },
   home: {
-    hero_kicker: 'Bioquímica · Docencia · Ciencia', hero_title: 'Formación y divulgación en bioquímica', hero_text: '', hero_image_url: '',
-    hero_primary_label: 'Ver cursos', hero_primary_url: '/cursos', hero_secondary_label: 'Leer artículos', hero_secondary_url: '/articulos',
+    hero_kicker: 'Bioquímica · Docencia · Ciencia', hero_title: 'Impulsá tu crecimiento profesional.', hero_text: 'Bioquns es un espacio dedicado a la educación a distancia, para profesionales que desean mantenerse actualizados en el ámbito bioquímico y de la salud.', hero_image_url: '',
+    hero_primary_label: 'Ver cursos', hero_primary_url: '/cursos', hero_secondary_label: 'Explorar artículos', hero_secondary_url: '/articulos',
     about_title: 'Qué es BIOQUNS', about_text: '', about_link_label: 'Conocé quiénes somos',
     courses_cta_title: '¿Querés actualizar tu formación?', courses_cta_text: '', courses_cta_label: 'Ver cursos', courses_cta_url: '/cursos',
-    sections: ['accesos', 'cursos', 'articulos', 'presentacion', 'publicaciones', 'cta_cursos', 'newsletter'].map((id) => ({ id, visible: true })),
+    sections: ['cursos', 'articulos', 'presentacion', 'publicaciones', 'cta_cursos', 'newsletter'].map((id) => ({ id, visible: true })),
   },
   about: { title: 'Quiénes somos', intro: '', mission_title: 'Propósito', mission: '', team_title: 'Responsables' },
   footer: {
@@ -45,7 +45,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   newsletter: {
     title: 'Recibí novedades de BIOQUNS',
-    text: 'Enterate de nuevos cursos de actualización profesional, artículos de interés y publicaciones científicas directamente en tu correo.',
+    text: 'Sé un profesional actualizado. Recibí novedades del ámbito bioquímico, contenidos de interés profesional y todas las novedades sobre nuestros próximos cursos y actividades de formación.',
     button: 'Suscribirme', consent: 'Acepto recibir correos de BIOQUNS con novedades. Puedo darme de baja en cualquier momento.',
     auto_article: true, auto_course: true, auto_publication: false,
   },

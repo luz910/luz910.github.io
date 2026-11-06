@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { CongressChildren } from './CongressChildren';
 import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Eye, Mail, Save, Send, Trash2 } from 'lucide-react';
@@ -73,7 +74,8 @@ function EditorInner({ r, id }: { r: Resource; id?: string }) {
     window.addEventListener('beforeunload', h);
     return () => window.removeEventListener('beforeunload', h);
   }, [dirty]);
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname);
+  const skipBlock = useRef(false); // evita el aviso al pasar de "nuevo" a la página de edición después de guardar
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => !skipBlock.current && dirty && currentLocation.pathname !== nextLocation.pathname);
 
   const set = (patch: Record<string, any>) => {
     setDirty(true);
@@ -97,7 +99,7 @@ function EditorInner({ r, id }: { r: Resource; id?: string }) {
   const scheduledFuture = data.published_at && new Date(data.published_at) > new Date();
 
   async function save(mode: 'draft' | 'publish' | 'keep' | 'archive') {
-    const payload: Record<string, any> = { ...data };
+    const payload: Record<string, any> = { ...data, ...(r.fixed ?? {}) };
     if (mode === 'draft') payload.status = 'draft';
     if (mode === 'archive') payload.status = 'archived';
     if (mode === 'publish') { payload.status = 'published'; if (!payload.published_at) payload.published_at = new Date().toISOString(); }
@@ -112,7 +114,10 @@ function EditorInner({ r, id }: { r: Resource; id?: string }) {
     const { data: saved, error } = await q;
     setSaving(false);
     if (error) {
-      if (error.code === '23505') { setErrors({ slug: 'Ya existe otro contenido con esta dirección.' }); return toast.error('Ya existe otro contenido con esta dirección (URL). Cambiala en el panel lateral.'); }
+      if (error.code === '23505') {
+        if (r.simple) { setErrors({}); set({ slug: `${payload.slug}-${Date.now().toString(36).slice(-4)}` }); setSlugTouched(true); return toast.error('Ya existe otro artículo con un título muy parecido. Probá guardar de nuevo.'); }
+        setErrors({ slug: 'Ya existe otro contenido con esta dirección.' }); return toast.error('Ya existe otro contenido con esta dirección (URL). Cambiala en el panel lateral.');
+      }
       if (error.code === '42501') return toast.error('No tenés permiso para guardar. Volvé a iniciar sesión.');
       return toast.error('No se pudo guardar: ' + error.message);
     }
@@ -121,18 +126,19 @@ function EditorInner({ r, id }: { r: Resource; id?: string }) {
     qc.invalidateQueries({ queryKey: ['admin', r.table] });
     qc.invalidateQueries({ queryKey: ['public'] }); qc.invalidateQueries({ queryKey: ['public-list'] }); qc.invalidateQueries({ queryKey: ['item'] });
     const live = saved.status === 'published' && new Date(saved.published_at) <= new Date();
-    toast.ok(saved.status === 'draft' ? 'Borrador guardado. No es visible en el sitio.' : saved.status === 'archived' ? 'Archivado.' : live ? 'Publicado: ya está visible en el sitio.' : 'Guardado y programado para la fecha indicada.');
+    toast.ok(saved.status === 'draft' ? 'Borrador guardado' : saved.status === 'archived' ? 'Archivado' : live ? (mode === 'keep' ? 'Cambios guardados' : 'Publicado') : 'Programado para la fecha indicada');
     if (r.notifies && live && mode === 'publish') {
       // Pide el envío inmediato de novedades (si está activado). El servidor evita duplicados.
       callFunction('admin', { action: 'dispatch' }, true).catch(() => {});
     }
-    if (!id) nav(`/admin/${r.key}/${saved.id}`, { replace: true });
+    if (!id) { skipBlock.current = true; nav(`/admin/${r.key}/${saved.id}`, { replace: true }); }
   }
 
   async function remove() {
     const { error } = await supabase.from(r.table).delete().eq('id', id!);
     if (error) return toast.error('No se pudo eliminar: ' + error.message);
     setDirty(false);
+    skipBlock.current = true;
     toast.ok('Eliminado.');
     qc.invalidateQueries({ queryKey: ['admin', r.table] });
     setTimeout(() => nav(`/admin/${r.key}`), 0);
@@ -149,31 +155,37 @@ function EditorInner({ r, id }: { r: Resource; id?: string }) {
         {dirty && <span className="text-xs font-semibold text-amber-700">Cambios sin guardar</span>}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-6">
+      {r.simple ? (
+        /* Formulario simple (artículos): una sola columna, fecha bajo el título y botones al final */
+        <div className="mt-6 max-w-4xl space-y-6">
           {sections.map(([title, fields]) => (
             <section key={title} className="rounded-xl border border-line bg-white p-5">
               <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-petrol">{title}</h2>
               <div className="grid gap-5 md:grid-cols-2">
                 {fields.map((f) => (
-                  <div key={f.name} className={f.wide || ['markdown', 'image', 'pdf', 'files', 'links', 'teachers', 'logos', 'tags', 'checkbox'].includes(f.type) ? 'md:col-span-2' : ''}>
-                    <FieldInput f={f} data={data} set={set} relations={relations.data} />
-                    {err(f.name)}
-                  </div>
+                  <Fragment key={f.name}>
+                    <div className={f.wide || ['markdown', 'image', 'pdf', 'files', 'links', 'teachers', 'logos', 'tags', 'checkbox'].includes(f.type) ? 'md:col-span-2' : ''}>
+                      <FieldInput f={f} data={data} set={set} relations={relations.data} />
+                      {err(f.name)}
+                    </div>
+                    {f.name === r.titleField && !r.noDate && (
+                      <div className="md:col-span-2">
+                        <label className="label" htmlFor="pubdate">Fecha de publicación</label>
+                        <input id="pubdate" type="datetime-local" className="input max-w-xs" value={toLocalInput(data.published_at)} onChange={(e) => set({ published_at: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+                        <p className="help">Si la dejás vacía, se usa el momento en que publicás. Con una fecha futura, se publica automáticamente ese día.</p>
+                        {scheduledFuture && <p className="mt-2 rounded-lg bg-blue-50 p-2 text-xs text-blue-800">Se mostrará en el sitio a partir de esa fecha.</p>}
+                      </div>
+                    )}
+                  </Fragment>
                 ))}
               </div>
             </section>
           ))}
-        </div>
 
-        <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
+          {r.congressChildren && <CongressChildren congressId={id} year={data.start_date ? Number(String(data.start_date).slice(0, 4)) : null} />}
+
           <div className="rounded-xl border border-line bg-white p-5">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-petrol">Publicación</h2>
-            <label className="label" htmlFor="pubdate">Fecha de publicación</label>
-            <input id="pubdate" type="datetime-local" className="input" value={toLocalInput(data.published_at)} onChange={(e) => set({ published_at: e.target.value ? new Date(e.target.value).toISOString() : null })} />
-            <p className="help">Vacío = ahora. Con una fecha futura, se publica automáticamente ese día.</p>
-            {scheduledFuture && <p className="mt-2 rounded-lg bg-blue-50 p-2 text-xs text-blue-800">Se mostrará en el sitio a partir de esa fecha.</p>}
-            <div className="mt-4 grid gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               {data.status === 'published' ? (
                 <>
                   <button className="btn-primary" disabled={saving} onClick={() => save('keep')}><Save className="h-4 w-4" />{saving ? 'Guardando…' : 'Guardar cambios'}</button>
@@ -194,39 +206,96 @@ function EditorInner({ r, id }: { r: Resource; id?: string }) {
             {r.notifies && (
               <p className="mt-4 flex gap-2 rounded-lg bg-mist p-2.5 text-xs text-ink-soft"><Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />Al publicarse, se avisará a los suscriptores si el envío automático está activado en Newsletter. Los borradores nunca generan correos.</p>
             )}
-          </div>
-
-          <div className="space-y-4 rounded-xl border border-line bg-white p-5">
-            {r.slugFrom && (
-              <div>
-                <label className="label" htmlFor="slug">Dirección (URL)</label>
-                <input id="slug" className="input font-mono text-xs" value={data.slug ?? ''} onChange={(e) => { setSlugTouched(true); set({ slug: e.target.value }); }} onBlur={() => set({ slug: slugify(data.slug ?? '') })} />
-                <p className="help break-all">{r.publicPath ? window.location.origin + r.publicPath({ ...data, slug: data.slug || '…' }) : ''}</p>
-                {err('slug')}
-              </div>
-            )}
-            {r.featured && (
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" className="h-4 w-4 accent-orange" checked={!!data.featured} onChange={(e) => set({ featured: e.target.checked })} />Destacar en la portada
-              </label>
-            )}
-            <div>
-              <label className="label" htmlFor="order">Orden de presentación</label>
-              <input id="order" type="number" className="input" value={data.sort_order ?? 0} onChange={(e) => set({ sort_order: Number(e.target.value) || 0 })} />
-              <p className="help">Número menor = aparece antes.</p>
-            </div>
+            {err('slug')}
           </div>
 
           {id && (
-            <div className="rounded-xl border border-red-200 bg-white p-5">
-              {data.status !== 'archived' && <button className="btn-ghost w-full" onClick={() => save('archive')}>Archivar (ocultar sin borrar)</button>}
-              <button className="btn-ghost mt-1 w-full text-red-700 hover:bg-red-50" onClick={() => setConfirmDel(true)}><Trash2 className="h-4 w-4" />Eliminar definitivamente</button>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-red-200 bg-white p-4">
+              {data.status !== 'archived' && <button className="btn-ghost" onClick={() => save('archive')}>Archivar (ocultar sin borrar)</button>}
+              <button className="btn-ghost text-red-700 hover:bg-red-50" onClick={() => setConfirmDel(true)}><Trash2 className="h-4 w-4" />Eliminar definitivamente</button>
             </div>
           )}
-        </aside>
-      </div>
+        </div>
+      ) : (
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="space-y-6">
+            {sections.map(([title, fields]) => (
+              <section key={title} className="rounded-xl border border-line bg-white p-5">
+                <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-petrol">{title}</h2>
+                <div className="grid gap-5 md:grid-cols-2">
+                  {fields.map((f) => (
+                    <div key={f.name} className={f.wide || ['markdown', 'image', 'pdf', 'files', 'links', 'teachers', 'logos', 'tags', 'checkbox'].includes(f.type) ? 'md:col-span-2' : ''}>
+                      <FieldInput f={f} data={data} set={set} relations={relations.data} />
+                      {err(f.name)}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+  
+          <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
+            <div className="rounded-xl border border-line bg-white p-5">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-petrol">Publicación</h2>
+              <label className="label" htmlFor="pubdate">Fecha de publicación</label>
+              <input id="pubdate" type="datetime-local" className="input" value={toLocalInput(data.published_at)} onChange={(e) => set({ published_at: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+              <p className="help">Vacío = ahora. Con una fecha futura, se publica automáticamente ese día.</p>
+              {scheduledFuture && <p className="mt-2 rounded-lg bg-blue-50 p-2 text-xs text-blue-800">Se mostrará en el sitio a partir de esa fecha.</p>}
+              <div className="mt-4 grid gap-2">
+                {data.status === 'published' ? (
+                  <>
+                    <button className="btn-primary" disabled={saving} onClick={() => save('keep')}><Save className="h-4 w-4" />{saving ? 'Guardando…' : 'Guardar cambios'}</button>
+                    <button className="btn-outline" disabled={saving} onClick={() => save('draft')}>Pasar a borrador (ocultar)</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="btn-primary" disabled={saving} onClick={() => save('publish')}><Send className="h-4 w-4" />{saving ? 'Guardando…' : scheduledFuture ? 'Programar publicación' : 'Publicar'}</button>
+                    <button className="btn-outline" disabled={saving} onClick={() => save('draft')}><Save className="h-4 w-4" />Guardar borrador</button>
+                  </>
+                )}
+                {id && r.publicPath && (
+                  <a className="btn-ghost" href={appHref(r.publicPath(data) + '?preview=1')} {...newTab} onClick={(e) => { if (dirty) { e.preventDefault(); toast.error('Guardá los cambios (por ejemplo como borrador) antes de ver la vista previa.'); } }}>
+                    <Eye className="h-4 w-4" />Vista previa
+                  </a>
+                )}
+              </div>
+              {r.notifies && (
+                <p className="mt-4 flex gap-2 rounded-lg bg-mist p-2.5 text-xs text-ink-soft"><Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />Al publicarse, se avisará a los suscriptores si el envío automático está activado en Newsletter. Los borradores nunca generan correos.</p>
+              )}
+            </div>
+  
+            <div className="space-y-4 rounded-xl border border-line bg-white p-5">
+              {r.slugFrom && (
+                <div>
+                  <label className="label" htmlFor="slug">Dirección (URL)</label>
+                  <input id="slug" className="input font-mono text-xs" value={data.slug ?? ''} onChange={(e) => { setSlugTouched(true); set({ slug: e.target.value }); }} onBlur={() => set({ slug: slugify(data.slug ?? '') })} />
+                  <p className="help break-all">{r.publicPath ? window.location.origin + r.publicPath({ ...data, slug: data.slug || '…' }) : ''}</p>
+                  {err('slug')}
+                </div>
+              )}
+              {r.featured && (
+                <label className="flex items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" className="h-4 w-4 accent-orange" checked={!!data.featured} onChange={(e) => set({ featured: e.target.checked })} />Destacar en la portada
+                </label>
+              )}
+              <div>
+                <label className="label" htmlFor="order">Orden de presentación</label>
+                <input id="order" type="number" className="input" value={data.sort_order ?? 0} onChange={(e) => set({ sort_order: Number(e.target.value) || 0 })} />
+                <p className="help">Número menor = aparece antes.</p>
+              </div>
+            </div>
+  
+            {id && (
+              <div className="rounded-xl border border-red-200 bg-white p-5">
+                {data.status !== 'archived' && <button className="btn-ghost w-full" onClick={() => save('archive')}>Archivar (ocultar sin borrar)</button>}
+                <button className="btn-ghost mt-1 w-full text-red-700 hover:bg-red-50" onClick={() => setConfirmDel(true)}><Trash2 className="h-4 w-4" />Eliminar definitivamente</button>
+              </div>
+            )}
+          </aside>
+        </div>
+      )}
 
-      <ConfirmDialog open={confirmDel} title={`¿Eliminar este ${r.singular}?`} text="Esta acción no se puede deshacer." onCancel={() => setConfirmDel(false)} onConfirm={() => { setConfirmDel(false); remove(); }} />
+      <ConfirmDialog open={confirmDel} title={`¿Eliminar ${r.female ? 'esta' : 'este'} ${r.singular}?`} text="Esta acción no se puede deshacer." onCancel={() => setConfirmDel(false)} onConfirm={() => { setConfirmDel(false); remove(); }} />
       <ConfirmDialog open={blocker.state === 'blocked'} title="Hay cambios sin guardar" text="Si salís ahora, se perderán." confirmLabel="Salir sin guardar" onCancel={() => blocker.reset?.()} onConfirm={() => blocker.proceed?.()} />
     </div>
   );

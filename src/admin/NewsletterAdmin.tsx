@@ -93,11 +93,11 @@ function Subscribers() {
       </div>
       <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
         <table className="w-full text-sm">
-          <thead className="bg-mist text-left text-xs uppercase text-mute"><tr><th className="p-3">Correo</th><th className="p-3">Nombre</th><th className="p-3">Intereses</th><th className="p-3">Alta</th><th className="p-3">Consentimiento</th><th className="p-3" /></tr></thead>
+          <thead className="bg-mist text-left text-xs uppercase text-mute"><tr><th className="p-3">Correo</th><th className="p-3">Nombre</th><th className="p-3">Recibe</th><th className="p-3">Alta</th><th className="p-3">Consentimiento</th><th className="p-3" /></tr></thead>
           <tbody className="divide-y divide-line">
             {list.data?.map((r: any) => (
               <tr key={r.id}>
-                <td className="p-3 font-semibold">{r.email}</td><td className="p-3">{r.name}</td><td className="p-3 text-xs">{(r.interests ?? []).join(', ')}</td>
+                <td className="p-3 font-semibold">{r.email}</td><td className="p-3">{r.name}</td><td className="p-3 text-xs">{(r.interests ?? []).includes('Artículos') ? 'Cursos y artículos' : 'Solo cursos'}</td>
                 <td className="whitespace-nowrap p-3 text-xs">{fmtShort(r.created_at)}</td>
                 <td className="p-3 text-xs text-mute" title={r.consent_text ?? ''}>{r.confirmed_at ? `Confirmado ${fmtShort(r.confirmed_at)}` : r.consent_at ? 'Aceptado, sin confirmar' : '—'}</td>
                 <td className="whitespace-nowrap p-3 text-right">
@@ -115,6 +115,7 @@ function Subscribers() {
   );
 }
 
+// @ts-ignore — pestaña oculta a pedido: los avisos se envían siempre según lo que eligió cada suscriptor
 function AutoSettings() {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -162,6 +163,7 @@ const CAMPAIGN_FIELDS: Field[] = [
   { name: 'cta_url', label: 'Enlace del botón', type: 'url', placeholder: 'https://…' },
 ];
 
+// @ts-ignore — sección de campañas manuales oculta a pedido; se conserva por si se quiere volver a usar
 function Campaigns() {
   const toast = useToast();
   const qc = useQueryClient();
@@ -248,18 +250,24 @@ function History() {
 }
 
 export default function NewsletterAdmin() {
-  const [tab, setTab] = useState<'subs' | 'auto' | 'camp' | 'hist'>('subs');
-  const tabs = [['subs', 'Suscriptores'], ['auto', 'Envíos automáticos'], ['camp', 'Campañas manuales'], ['hist', 'Historial de avisos']] as const;
+  const [tab, setTab] = useState<'subs' | 'hist'>('subs');
+  const tabs = [['subs', 'Suscriptores'], ['hist', 'Historial de avisos']] as const;
   return (
     <div>
       <h1 className="text-2xl font-extrabold text-ink">Newsletter y suscriptores</h1>
       <div className="mt-4"><MailStatusBox /></div>
+      <div className="mt-4 rounded-xl border border-line bg-white p-5 text-sm text-ink-soft">
+        <p className="font-bold text-ink">¿Cómo funcionan los avisos?</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>Cuando publicás un <strong>curso</strong>, el aviso les llega a <strong>todos</strong> los suscriptores.</li>
+          <li>Cuando publicás un <strong>artículo</strong> o una <strong>publicación</strong>, les llega solo a quienes lo pidieron: los que se anotaron en Artículos de interés o en el pie de página. Quienes se anotan en Nuestros cursos reciben solo los cursos.</li>
+          <li>Cada contenido se avisa una sola vez y los borradores nunca generan correos.</li>
+        </ul>
+      </div>
       <div className="my-6 flex flex-wrap gap-1 rounded-xl bg-white p-1 ring-1 ring-line">
         {tabs.map(([k, l]) => <button key={k} className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab === k ? 'bg-ink text-white' : 'text-ink-soft hover:bg-mist'}`} onClick={() => setTab(k)}>{l}</button>)}
       </div>
       {tab === 'subs' && <Subscribers />}
-      {tab === 'auto' && <AutoSettings />}
-      {tab === 'camp' && <Campaigns />}
       {tab === 'hist' && <History />}
     </div>
   );

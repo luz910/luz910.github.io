@@ -3,8 +3,9 @@ import { Search } from 'lucide-react';
 import { useDistinct, usePublicInfinite } from '../lib/api';
 import type { Article } from '../lib/types';
 import { ArticleCard } from '../components/Cards';
-import { Empty, ErrorBox, FilterBar, LoadMore, PageHeader, SkeletonGrid } from '../components/ui';
+import { Empty, ErrorBox, LoadMore, PageHeader, SkeletonGrid } from '../components/ui';
 import { Seo } from '../components/Seo';
+import { NewsletterForm } from '../components/NewsletterForm';
 import { useDebounced } from '../lib/useDebounced';
 
 export default function Articles() {
@@ -26,7 +27,7 @@ export default function Articles() {
       <Seo title="Artículos de interés" description="Biblioteca de artículos de divulgación, actualización y formación en bioquímica y áreas relacionadas." />
       <PageHeader eyebrow="Biblioteca" title="Artículos de interés" intro="Divulgación, actualización y formación en bioquímica y áreas relacionadas." />
       <div className="container-x py-12">
-        <FilterBar>
+        <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-line bg-white p-3">
           <div className="relative flex-1">
             <label htmlFor="buscar" className="sr-only">Buscar artículos</label>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
@@ -38,7 +39,10 @@ export default function Articles() {
               <button key={c} className={`chip px-3 py-1.5 ${cat === c ? 'bg-ink text-white' : 'hover:bg-line'}`} aria-pressed={cat === c} onClick={() => set('categoria', c)}>{c}</button>
             ))}
           </div>
-        </FilterBar>
+        </div>
+        <div className="mb-10 rounded-2xl bg-petrol-soft p-6">
+          <NewsletterForm variant="strip" topic="articulos" heading="Recibí los nuevos artículos" text="No te pierdas lo nuevo en bioquímica y ciencias de la salud." />
+        </div>
         {list.isLoading ? <SkeletonGrid /> : list.error ? <ErrorBox error={list.error} /> : rows.length === 0 ? (
           <Empty title={q || cat ? 'No encontramos artículos con esos criterios' : 'Todavía no hay artículos publicados'} text={q || cat ? 'Probá con otras palabras o quitá el filtro.' : undefined} />
         ) : (

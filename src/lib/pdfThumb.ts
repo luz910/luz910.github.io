@@ -1,8 +1,10 @@
+import './polyfills';
+import { workerUrl } from './pdfWorker';
 /** Genera una miniatura PNG de la primera página de un PDF, en el navegador del editor. */
 export async function pdfFirstPageThumb(file: File, width = 900): Promise<Blob> {
   const pdfjs = await import('pdfjs-dist');
   const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  pdfjs.GlobalWorkerOptions.workerSrc = await workerUrl(worker.default);
   const task = pdfjs.getDocument({ data: await file.arrayBuffer() });
   const doc = await task.promise;
   const page = await doc.getPage(1);

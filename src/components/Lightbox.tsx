@@ -27,8 +27,6 @@ export function Lightbox({ photos, index, onClose, onIndex }: { photos: Photo[];
         {photos.length > 1 && <button className="absolute right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20" aria-label="Foto siguiente" onClick={() => onIndex((index + 1) % photos.length)}><ChevronRight className="h-6 w-6" /></button>}
       </div>
       <div className="mx-auto max-w-2xl pt-3 text-center text-white" onClick={(e) => e.stopPropagation()}>
-        {p.title && <p className="font-semibold">{p.title}</p>}
-        {p.description && <p className="mt-1 text-sm text-white/70">{p.description}</p>}
         <p className="mt-1 text-xs text-white/50">{index + 1} / {photos.length}</p>
       </div>
     </div>

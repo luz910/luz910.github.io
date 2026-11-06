@@ -7,6 +7,16 @@ function parse(d: string) {
 }
 export const fmtDate = (d?: string | null) => (d ? dateFmt.format(parse(d)) : '');
 export const fmtShort = (d?: string | null) => (d ? shortFmt.format(parse(d)) : '');
+/** "Mayo 2026" */
+export function fmtMonth(a?: string | null) {
+  if (!a) return '';
+  const d = new Date(String(a).slice(0, 10) + 'T12:00:00Z');
+  if (isNaN(d.getTime())) return '';
+  const m = d.toLocaleDateString('es-AR', { month: 'long', timeZone: 'UTC' });
+  const t = `${m} ${d.getUTCFullYear()}`;
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export function fmtRange(a?: string | null, b?: string | null) {
   if (!a) return fmtDate(b);
   if (!b || a === b) return fmtDate(a);

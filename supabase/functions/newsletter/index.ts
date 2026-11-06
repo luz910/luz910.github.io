@@ -53,7 +53,10 @@ async function subscribe(db: ReturnType<typeof adminClient>, b: any) {
   const interests = Array.isArray(b.interests) ? b.interests.map(String).slice(0, 10) : [];
 
   const { data: existing } = await db.from('subscribers').select('*').eq('email', email).maybeSingle();
+  // Los intereses se suman, nunca se quitan (quien ya recibía cursos y se anota en artículos pasa a recibir ambos).
+  const merged = Array.from(new Set([...(existing?.interests ?? []), ...interests]));
   if (existing?.status === 'active') {
+    if (merged.length !== (existing.interests ?? []).length) await db.from('subscribers').update({ interests: merged }).eq('id', existing.id);
     // Mensaje genérico: no revela si un correo está o no en la lista.
     return json({ message: 'Gracias. Si tu correo no estaba confirmado, te enviamos un mensaje para hacerlo.' });
   }
@@ -71,7 +74,7 @@ async function subscribe(db: ReturnType<typeof adminClient>, b: any) {
     const recent = existing.last_confirm_sent && Date.now() - new Date(existing.last_confirm_sent).getTime() < RESEND_CONFIRM_AFTER_MIN * 60_000;
     if (recent) return json({ message: 'Ya te enviamos el correo de confirmación hace unos minutos. Revisá también la carpeta de spam.' });
     const { data, error } = await db.from('subscribers').update({
-      status: 'pending', name: name ?? existing.name, interests: interests.length ? interests : existing.interests,
+      status: 'pending', name: name ?? existing.name, interests: merged,
       consent_text: consent, consent_at: now, confirm_token: crypto.randomUUID(), unsubscribed_at: null,
     }).eq('id', existing.id).select().single();
     if (error) throw error;

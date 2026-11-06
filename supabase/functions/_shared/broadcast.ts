@@ -7,9 +7,10 @@ type DB = any;
 
 interface Cursor { last_created_at: string | null; last_subscriber_id: string | null }
 
-export async function nextBatch(db: DB, c: Cursor) {
+export async function nextBatch(db: DB, c: Cursor, onlyInterest?: string | null) {
   let q = db.from('subscribers').select('id,email,name,unsubscribe_token,created_at').eq('status', 'active')
     .order('created_at', { ascending: true }).order('id', { ascending: true }).limit(BATCH);
+  if (onlyInterest) q = q.contains('interests', [onlyInterest]);
   if (c.last_created_at && c.last_subscriber_id) {
     q = q.or(`created_at.gt."${c.last_created_at}",and(created_at.eq."${c.last_created_at}",id.gt.${c.last_subscriber_id})`);
   }
@@ -19,11 +20,11 @@ export async function nextBatch(db: DB, c: Cursor) {
 }
 
 /** Envía a todos los suscriptores activos, retomando desde el cursor. Guarda el progreso tras cada tanda. */
-export async function sendToAll(db: DB, table: 'notifications' | 'campaigns', row: any, build: (s: any) => Mail, send: typeof sendBatch = sendBatch) {
+export async function sendToAll(db: DB, table: 'notifications' | 'campaigns', row: any, build: (s: any) => Mail, send: typeof sendBatch = sendBatch, onlyInterest?: string | null) {
   let cursor: Cursor = { last_created_at: row.last_created_at, last_subscriber_id: row.last_subscriber_id };
   let sent = row.sent_count ?? 0;
   for (;;) {
-    const subs = await nextBatch(db, cursor);
+    const subs = await nextBatch(db, cursor, onlyInterest);
     if (!subs.length) break;
     const mails = subs.map(build);
     // La clave de idempotencia impide que Resend envíe dos veces la misma tanda ante reintentos.

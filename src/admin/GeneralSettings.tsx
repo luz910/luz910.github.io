@@ -1,51 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Save, Trash2, UserPlus } from 'lucide-react';
-import { saveSetting, useSettings } from '../lib/settings';
+import { Save, Trash2, UserPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { callFunction } from '../lib/functions';
-import { slugify } from '../lib/format';
-import { ImageInput } from './fields';
-import { SettingsForm } from './SettingsEditors';
 import { ConfirmDialog, useToast } from './toast';
-
-function LogosManager() {
-  const { settings, loading } = useSettings();
-  const qc = useQueryClient();
-  const toast = useToast();
-  const [logos, setLogos] = useState<Record<string, { label: string; url: string }> | null>(null);
-  const [newName, setNewName] = useState('');
-  useEffect(() => { if (!loading && !logos) setLogos(structuredClone(settings.logos)); }, [loading, settings.logos, logos]);
-  if (!logos) return null;
-  async function save() {
-    try { await saveSetting('logos', logos!); await qc.invalidateQueries({ queryKey: ['settings'] }); toast.ok('Logos guardados. Ya se ven en las tarjetas de cursos.'); }
-    catch (e) { toast.error((e as Error).message); }
-  }
-  return (
-    <section className="rounded-xl border border-line bg-white p-5">
-      <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-petrol">Logos institucionales de las tarjetas de cursos</h2>
-      <p className="mb-4 mt-1 text-xs text-mute">Reemplazá cada logo de forma individual. Se muestran respetando sus proporciones. En cada curso elegís cuáles aparecen.</p>
-      <div className="space-y-4">
-        {Object.entries(logos).map(([k, l]) => (
-          <div key={k} className="rounded-lg border border-line p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <input className="input max-w-xs" aria-label="Nombre del logo" value={l.label} onChange={(e) => setLogos({ ...logos, [k]: { ...l, label: e.target.value } })} />
-              <code className="text-xs text-mute">{k}</code>
-              {!['uns', 'bioquns', 'dirEaD'].includes(k) && <button className="ml-auto rounded p-2 text-red-700 hover:bg-red-50" aria-label="Quitar logo" onClick={() => { const n = { ...logos }; delete n[k]; setLogos(n); }}><Trash2 className="h-4 w-4" /></button>}
-            </div>
-            <ImageInput id={`logo-${k}`} value={l.url} folder="logos" onChange={(url) => setLogos({ ...logos, [k]: { ...l, url } })} />
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <input className="input max-w-xs" placeholder="Nombre de un logo nuevo" value={newName} onChange={(e) => setNewName(e.target.value)} />
-        <button className="btn-outline" onClick={() => { const k = slugify(newName); if (!k) return; setLogos({ ...logos, [k]: { label: newName, url: '' } }); setNewName(''); }}><Plus className="h-4 w-4" />Agregar logo</button>
-        <button className="btn-primary ml-auto" onClick={save}><Save className="h-4 w-4" />Guardar logos</button>
-      </div>
-    </section>
-  );
-}
 
 function EditorsManager() {
   const { role, session } = useAuth();
@@ -100,16 +59,10 @@ function EditorsManager() {
 
 export default function GeneralSettings() {
   return (
-    <SettingsForm
-      k="general" title="Configuración general"
-      groups={[{ title: 'Sitio y buscadores', fields: [
-        { name: 'site_name', label: 'Nombre del sitio', type: 'text', required: true },
-        { name: 'site_url', label: 'Dirección pública del sitio', type: 'url', placeholder: 'https://www.bioquns.com.ar', help: 'Se usa en los correos, el sitemap y los enlaces canónicos. Completala cuando tengas el dominio.' },
-        { name: 'tagline', label: 'Lema (aparece en el título de la pestaña)', type: 'text', wide: true },
-        { name: 'default_seo_description', label: 'Descripción general para buscadores', type: 'textarea', rows: 2, wide: true },
-      ] }]}
-      extra={() => <><LogosManager /><EditorsManager /></>}
-    />
+    <div className="max-w-4xl">
+      <h1 className="mb-6 text-2xl font-extrabold text-ink">Editores</h1>
+      <EditorsManager />
+    </div>
   );
 }
 

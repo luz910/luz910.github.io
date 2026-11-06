@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, ExternalLink, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, ExternalLink, Users } from 'lucide-react';
 import { usePublicItem, usePublicList } from '../lib/api';
 import type { Article } from '../lib/types';
 import { doiUrl, fmtDate, plainText } from '../lib/format';
@@ -47,52 +47,39 @@ export default function ArticleDetail() {
       {preview && <PreviewBanner />}
       <article>
         <header className="border-b border-line bg-white">
-          <div className="container-x max-w-4xl py-10 sm:py-14">
+          <div className="container-x py-10 sm:py-14">
             <Link to="/articulos" className="inline-flex items-center gap-1.5 text-sm font-semibold text-mute hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden /> Artículos de interés</Link>
-            {a.category && <p className="eyebrow mt-6">{a.category}</p>}
-            <h1 className="h-display mt-3 text-4xl leading-tight sm:text-5xl">{a.title}</h1>
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-soft">
-              {a.authors && <span className="inline-flex items-center gap-2"><Users className="h-4 w-4 text-petrol" aria-hidden />{a.authors}</span>}
+            <h1 className="h-display mt-6 text-4xl leading-tight sm:text-5xl">{a.title}</h1>
+            {a.authors && <p className="mt-6 inline-flex items-center gap-2 text-sm text-ink-soft"><Users className="h-4 w-4 text-petrol" aria-hidden />{a.authors}</p>}
+            <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-soft">
               {a.published_at && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-petrol" aria-hidden /><time dateTime={a.published_at}>{fmtDate(a.published_at)}</time></span>}
+              {a.source && <span className="inline-flex items-center gap-2"><BookOpen className="h-4 w-4 text-petrol" aria-hidden />{a.source}</span>}
             </div>
           </div>
         </header>
-        {a.cover_url && (
-          <div className="container-x max-w-5xl -mb-4 pt-8">
-            <img src={a.cover_url} alt={a.cover_alt ?? ''} className="aspect-[16/8] w-full rounded-3xl object-cover" />
-          </div>
-        )}
-        <div className="container-x grid max-w-5xl gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <div className="container-x grid gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="min-w-0">
-            {a.summary && (
-              <section className="mb-10 rounded-2xl border-l-4 border-orange bg-orange-soft/50 p-6">
-                <h2 className="eyebrow mb-2">Resumen</h2>
-                <Markdown className="!text-ink">{a.summary}</Markdown>
-              </section>
-            )}
-            <Markdown>{a.body}</Markdown>
-            {a.references_md && (
-              <section className="mt-12 border-t border-line pt-8">
-                <h2 className="h-display mb-4 text-2xl">Referencias bibliográficas</h2>
-                <Markdown className="text-sm">{a.references_md}</Markdown>
-              </section>
+            {a.summary && <section><h2 className="h-display mb-4 text-2xl">Resumen</h2><Markdown>{a.summary}</Markdown></section>}
+            {a.tags?.length > 0 && (
+              <div className="mt-10">
+                <h2 className="mb-3 text-sm font-bold text-ink">Palabras clave</h2>
+                <div className="flex flex-wrap gap-2">{a.tags.map((t) => <span key={t} className="chip">{t}</span>)}</div>
+              </div>
             )}
             <div className="mt-12 border-t border-line pt-6"><Share title={a.title} /></div>
           </div>
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-            {(a.source || doi || a.external_url) && (
+            {(doi || a.external_url) && (
               <div className="card space-y-3 p-5 text-sm">
-                <h2 className="eyebrow">Fuente</h2>
-                {a.source && <p className="text-ink">{a.source}</p>}
+                <h2 className="eyebrow font-display !text-[0.8rem] !font-extrabold">Fuente</h2>
                 {doi && <p><span className="font-semibold">DOI: </span><a href={doi} className="link break-all" target="_blank" rel="noopener noreferrer">{a.doi}</a></p>}
                 {a.external_url && <a href={a.external_url} target="_blank" rel="noopener noreferrer" className="btn-dark w-full">Ver artículo completo <ExternalLink className="h-4 w-4" aria-hidden /></a>}
               </div>
             )}
-            {a.tags?.length > 0 && <div className="flex flex-wrap gap-2">{a.tags.map((t) => <span key={t} className="chip">{t}</span>)}</div>}
             <div className="rounded-2xl bg-petrol-soft p-5">
-              <p className="font-serif text-lg text-petrol-deep">¿Te interesan estos temas?</p>
+              <p className="font-display font-bold text-lg text-petrol-deep">¿Te interesan estos temas?</p>
               <p className="mb-3 mt-1 text-sm text-ink-soft">Recibí nuevos artículos y cursos por correo.</p>
-              <NewsletterForm variant="compact" />
+              <NewsletterForm variant="compact" topic="articulos" />
             </div>
           </aside>
         </div>

@@ -3,18 +3,15 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, AlertTriangle } from 'lucide-react';
 import { DnaSymbol } from './DnaSymbol';
 
-export function PageHeader({ eyebrow, title, intro, children }: { eyebrow?: string; title: string; intro?: ReactNode; children?: ReactNode }) {
+export function PageHeader({ title, children }: { eyebrow?: string; title: string; intro?: ReactNode; children?: ReactNode }) {
   return (
-    <section className="relative overflow-hidden border-b border-line bg-white">
-      <div className="helix-bg absolute inset-0 opacity-70" aria-hidden />
-      <div className="container-x relative flex items-end justify-between gap-8 py-12 sm:py-16">
+    <section className="relative overflow-hidden border-b border-card-line bg-bar">
+      <div className="container-x relative flex items-center justify-between gap-6 py-6 sm:py-8">
         <div className="max-w-3xl">
-          {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-          <h1 className="h-display mt-2 text-4xl sm:text-5xl">{title}</h1>
-          {intro && <div className="mt-4 text-lg leading-relaxed text-ink-soft">{intro}</div>}
+          <h1 className="font-display text-2xl font-extrabold uppercase leading-tight tracking-[0.01em] text-petrol-deep sm:text-3xl">{title}</h1>
           {children}
         </div>
-        <DnaSymbol className="hidden h-28 w-auto opacity-90 md:block" />
+        <DnaSymbol className="hidden h-14 w-auto opacity-90 md:block" />
       </div>
     </section>
   );
@@ -75,7 +72,7 @@ export function FilterBar({ children }: { children: ReactNode }) {
 
 export function PreviewBanner() {
   return (
-    <div className="sticky top-16 z-30 bg-petrol px-4 py-2 text-center text-sm font-semibold text-white">
+    <div className="sticky top-20 z-30 bg-petrol px-4 py-2 text-center text-sm font-semibold text-white">
       Vista previa para editores — este contenido puede no estar publicado todavía.
     </div>
   );

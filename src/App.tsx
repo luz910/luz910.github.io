@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import { PublicLayout } from './components/Layout';
 import { DnaLoader } from './components/DnaSymbol';
 import Home from './pages/Home';
@@ -10,7 +10,7 @@ import CourseDetail from './pages/CourseDetail';
 import Publications from './pages/Publications';
 import PublicationDetail from './pages/PublicationDetail';
 import { CongressesLayout, CongressTimeline } from './pages/Congresses';
-import { CongressDetail, Gallery, PosterDetail, PosterGrid, TalkDetail, TalkList } from './pages/CongressPages';
+import { CongressDetail, Gallery, PosterDetail, PosterGrid } from './pages/CongressPages';
 import About from './pages/About';
 import { Confirm, Privacy, Unsubscribe } from './pages/Newsletter';
 import NotFound from './pages/NotFound';
@@ -33,8 +33,7 @@ export default function App() {
           <Route path="publicaciones/:slug" element={<PublicationDetail />} />
           <Route path="congresos" element={<CongressesLayout />}>
             <Route index element={<CongressTimeline />} />
-            <Route path="disertaciones" element={<TalkList />} />
-            <Route path="disertaciones/:slug" element={<TalkDetail />} />
+            <Route path="disertaciones/*" element={<Navigate to="/congresos" replace />} />
             <Route path="posteres" element={<PosterGrid />} />
             <Route path="posteres/:slug" element={<PosterDetail />} />
             <Route path="galeria" element={<Gallery />} />

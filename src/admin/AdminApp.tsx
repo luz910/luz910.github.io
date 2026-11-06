@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { BookOpenText, Cog, ExternalLink, FileText, GraduationCap, Home, Images, LayoutDashboard, LogOut, Mail, Menu, Mic2, Microscope, PanelBottom, Presentation, UserRound, Users, X, Info } from 'lucide-react';
+import { BookOpenText, UserCog, ExternalLink, FileText, GraduationCap, Images, LayoutDashboard, LogOut, Mail, Menu, Microscope, Presentation, UserRound, Users, X, Info } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { DnaLoader } from '../components/DnaSymbol';
 import { Seo } from '../components/Seo';
@@ -8,7 +8,7 @@ import { ToastProvider } from './toast';
 import ResourceList from './ResourceList';
 import ResourceEditor from './ResourceEditor';
 import Dashboard from './Dashboard';
-import { AboutEditor, FooterEditor, HomeEditor } from './SettingsEditors';
+import { AboutEditor } from './SettingsEditors';
 import GeneralSettings, { Account } from './GeneralSettings';
 import GalleryAdmin from './GalleryAdmin';
 import NewsletterAdmin from './NewsletterAdmin';
@@ -16,19 +16,16 @@ import { appHref, newTab } from '../lib/paths';
 
 const MENU = [
   { to: '/admin', label: 'Resumen general', icon: LayoutDashboard, end: true },
-  { to: '/admin/portada', label: 'Editar portada', icon: Home },
   { to: '/admin/articulos', label: 'Artículos', icon: BookOpenText },
   { to: '/admin/cursos', label: 'Cursos', icon: GraduationCap },
   { to: '/admin/publicaciones', label: 'Publicaciones', icon: Microscope },
-  { to: '/admin/congresos', label: 'Congresos', icon: Presentation },
-  { to: '/admin/disertaciones', label: 'Disertaciones', icon: Mic2 },
+  { to: '/admin/congresos', label: 'Actividades científicas', icon: Presentation },
   { to: '/admin/posteres', label: 'Pósteres', icon: FileText },
   { to: '/admin/galeria', label: 'Galería', icon: Images },
   { to: '/admin/quienes-somos', label: 'Quiénes somos', icon: Info },
   { to: '/admin/integrantes', label: 'Integrantes', icon: Users },
   { to: '/admin/newsletter', label: 'Newsletter y suscriptores', icon: Mail },
-  { to: '/admin/pie', label: 'Pie de página y contacto', icon: PanelBottom },
-  { to: '/admin/configuracion', label: 'Configuración general', icon: Cog },
+  { to: '/admin/editores', label: 'Editores', icon: UserCog },
 ];
 
 export default function AdminApp() {
@@ -73,12 +70,10 @@ export default function AdminApp() {
           <main className="mx-auto max-w-6xl p-4 sm:p-8">
             <Routes>
               <Route index element={<Dashboard />} />
-              <Route path="portada" element={<HomeEditor />} />
               <Route path="quienes-somos" element={<AboutEditor />} />
-              <Route path="pie" element={<FooterEditor />} />
               <Route path="galeria" element={<GalleryAdmin />} />
               <Route path="newsletter" element={<NewsletterAdmin />} />
-              <Route path="configuracion" element={<GeneralSettings />} />
+              <Route path="editores" element={<GeneralSettings />} />
               <Route path="cuenta" element={<Account />} />
               <Route path=":key" element={<ResourceList />} />
               <Route path=":key/:id" element={<ResourceEditor />} />

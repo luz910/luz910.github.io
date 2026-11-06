@@ -7,7 +7,7 @@ import { useSettings } from '../lib/settings';
 import { useToast } from './toast';
 
 export type FieldType =
-  | 'text' | 'textarea' | 'markdown' | 'number' | 'date' | 'datetime' | 'url' | 'email'
+  | 'text' | 'textarea' | 'markdown' | 'number' | 'date' | 'month' | 'datetime' | 'url' | 'email'
   | 'select' | 'checkbox' | 'tags' | 'image' | 'pdf' | 'files' | 'links' | 'teachers' | 'logos' | 'relation';
 
 export interface Field {
@@ -30,6 +30,10 @@ export interface Field {
   wide?: boolean;
   section?: string;
   rows?: number;
+  /** Para "teachers": muestra solo el docente coordinador o el resto del plantel (todo se guarda en la columna teachers) */
+  teacherRole?: 'coordinator' | 'staff';
+  /** Para "select" no obligatorio: texto de la opción vacía */
+  emptyLabel?: string;
 }
 
 export function FieldShell({ f, id, children }: { f: Pick<Field, 'label' | 'required' | 'help'>; id: string; children: ReactNode }) {
@@ -114,7 +118,7 @@ function MarkdownInput({ id, value, onChange, rows = 10, placeholder }: { id: st
 }
 
 /* ---------- Subida de imagen ---------- */
-export function ImageInput({ id, value, onChange, alt, onAlt, folder = 'imagenes' }: { id: string; value: string; onChange: (v: string) => void; alt?: string; onAlt?: (v: string) => void; folder?: string }) {
+export function ImageInput({ id, value, onChange, folder = 'imagenes' }: { id: string; value: string; onChange: (v: string) => void; alt?: string; onAlt?: (v: string) => void; folder?: string }) {
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
   const toast = useToast();
@@ -140,47 +144,50 @@ export function ImageInput({ id, value, onChange, alt, onAlt, folder = 'imagenes
           {value && <button type="button" className="btn-ghost !py-1.5 text-xs text-red-700" onClick={() => onChange('')}><X className="h-3.5 w-3.5" />Quitar</button>}
         </div>
         <input ref={ref} id={id} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ''; }} />
-        {onAlt && (
-          <div>
-            <label className="text-xs font-semibold text-ink-soft" htmlFor={id + '-alt'}>Texto alternativo (describe la imagen para lectores de pantalla)</label>
-            <input id={id + '-alt'} className="input mt-1" value={alt ?? ''} onChange={(e) => onAlt(e.target.value)} placeholder="Ej.: Docentes presentando un póster en el congreso" />
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-/* ---------- Subida de PDF con miniatura automática ---------- */
+/* ---------- Subida de PDF o imagen (con miniatura automática si es PDF) ---------- */
 function PdfInput({ id, value, onChange, onThumb, folder = 'pdf' }: { id: string; value: string; onChange: (v: string) => void; onThumb?: (v: string) => void; folder?: string }) {
   const [busy, setBusy] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const ref = useRef<HTMLInputElement>(null);
   const toast = useToast();
   async function pick(file: File) {
-    if (file.type !== 'application/pdf') return toast.error('El archivo debe ser un PDF.');
+    const isPdf = file.type === 'application/pdf';
+    const isImg = file.type.startsWith('image/');
+    if (!isPdf && !isImg) return toast.error('El archivo tiene que ser un PDF o una imagen (JPG, PNG, WEBP).');
     try {
-      setBusy('Subiendo PDF…');
+      setBusy('Subiendo archivo…');
       const url = await uploadFile(file, folder);
       onChange(url);
+      setName(file.name);
       if (onThumb) {
-        setBusy('Generando miniatura…');
-        try { onThumb(await uploadFile(await pdfFirstPageThumb(file), 'miniaturas', file.name.replace(/\.pdf$/i, '') + '-miniatura.webp')); }
-        catch { toast.error('El PDF se subió, pero no se pudo generar la miniatura. Podés cargarla a mano.'); }
+        if (isImg) onThumb(url);
+        else {
+          setBusy('Preparando vista previa…');
+          // Si no se puede generar la miniatura no pasa nada: el póster se publica igual.
+          try { onThumb(await uploadFile(await pdfFirstPageThumb(file), 'miniaturas', file.name.replace(/\.pdf$/i, '') + '-miniatura.webp')); }
+          catch (e) { console.warn('miniatura', e); }
+        }
       }
-      toast.ok('PDF subido. Recordá guardar los cambios.');
+      toast.ok('Archivo subido');
     } catch (e) { toast.error((e as Error).message); }
     finally { setBusy(null); }
   }
+  const shown = name ?? (value ? decodeURIComponent(value.split('/').pop() ?? '').replace(/^[a-z0-9]+-[a-f0-9]{8}-/, '') : '');
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-white p-3">
       <FileText className="h-8 w-8 shrink-0 text-orange" />
       <div className="min-w-0 flex-1 text-sm">
         {busy ? <span className="flex items-center gap-2 text-mute"><Loader2 className="h-4 w-4 animate-spin" />{busy}</span>
-          : value ? <a href={value} target="_blank" rel="noopener noreferrer" className="link block truncate">{decodeURIComponent(value.split('/').pop() ?? '')}</a>
-            : <span className="text-mute">Ningún PDF cargado</span>}
+          : value ? <a href={value} target="_blank" rel="noopener noreferrer" className="link block truncate">{shown || 'Ver archivo'}</a>
+            : <span className="text-mute">Ningún archivo cargado</span>}
       </div>
-      <button type="button" className="btn-outline !py-1.5 text-xs" onClick={() => ref.current?.click()} disabled={!!busy}><Upload className="h-3.5 w-3.5" />{value ? 'Reemplazar' : 'Subir PDF'}</button>
-      <input ref={ref} id={id} type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ''; }} />
+      <button type="button" className="btn-outline !py-1.5 text-xs" onClick={() => ref.current?.click()} disabled={!!busy}><Upload className="h-3.5 w-3.5" />{value ? 'Reemplazar' : 'Subir archivo'}</button>
+      <input ref={ref} id={id} type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ''; }} />
     </div>
   );
 }
@@ -239,7 +246,7 @@ function LinksInput({ value, onChange }: { value: { label: string; url: string }
   );
 }
 
-function TeachersInput({ value, onChange }: { value: { name: string; bio?: string; photo_url?: string }[]; onChange: (v: { name: string; bio?: string; photo_url?: string }[]) => void }) {
+function TeachersInput({ value, onChange, addLabel = 'Agregar docente', idPrefix = 'teacher' }: { value: { name: string; bio?: string; photo_url?: string }[]; onChange: (v: { name: string; bio?: string; photo_url?: string }[]) => void; addLabel?: string; idPrefix?: string }) {
   const set = (i: number, patch: object) => onChange(value.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
     <div className="space-y-3">
@@ -250,10 +257,10 @@ function TeachersInput({ value, onChange }: { value: { name: string; bio?: strin
             <RowTools i={i} n={value.length} onMove={(d) => onChange(move(value, i, d))} onDel={() => onChange(value.filter((_, j) => j !== i))} />
           </div>
           <textarea className="input" rows={3} placeholder="Antecedentes (título, cargo, experiencia)…" aria-label="Antecedentes del docente" value={t.bio ?? ''} onChange={(e) => set(i, { bio: e.target.value })} />
-          <ImageInput id={`teacher-${i}`} value={t.photo_url ?? ''} onChange={(v) => set(i, { photo_url: v })} folder="docentes" />
+          <ImageInput id={`${idPrefix}-${i}`} value={t.photo_url ?? ''} onChange={(v) => set(i, { photo_url: v })} folder="docentes" />
         </div>
       ))}
-      <button type="button" className="btn-outline !py-1.5 text-xs" onClick={() => onChange([...value, { name: '' }])}><Plus className="h-3.5 w-3.5" />Agregar docente</button>
+      <button type="button" className="btn-outline !py-1.5 text-xs" onClick={() => onChange([...value, { name: '' }])}><Plus className="h-3.5 w-3.5" />{addLabel}</button>
     </div>
   );
 }
@@ -311,7 +318,7 @@ export function FieldInput({ f, data, set, relations }: { f: Field; data: Record
       return (
         <FieldShell f={f} id={id}>
           <select id={id} className="input" value={str} onChange={(e) => set({ [f.name]: e.target.value })}>
-            {!f.required && <option value="">—</option>}
+            {!f.required && <option value="">{f.emptyLabel ?? '—'}</option>}
             {f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </FieldShell>
@@ -329,6 +336,8 @@ export function FieldInput({ f, data, set, relations }: { f: Field; data: Record
       return <FieldShell f={f} id={id}><input id={id} type="number" className="input" value={str} placeholder={f.placeholder} onChange={(e) => set({ [f.name]: e.target.value === '' ? null : Number(e.target.value) })} /></FieldShell>;
     case 'date':
       return <FieldShell f={f} id={id}><input id={id} type="date" className="input" value={str ? String(str).slice(0, 10) : ''} onChange={(e) => set({ [f.name]: e.target.value || null })} /></FieldShell>;
+    case 'month':
+      return <FieldShell f={f} id={id}><input id={id} type="month" className="input" value={str ? String(str).slice(0, 7) : ''} onChange={(e) => set({ [f.name]: e.target.value ? e.target.value + '-01' : null })} /></FieldShell>;
     case 'tags':
       return <FieldShell f={f} id={id}><TagsInput id={id} value={v ?? []} suggestions={f.suggestions} onChange={(x) => set({ [f.name]: x })} /></FieldShell>;
     case 'image':
@@ -339,8 +348,18 @@ export function FieldInput({ f, data, set, relations }: { f: Field; data: Record
       return <FieldShell f={f} id={id}><FilesInput value={v ?? []} folder={f.folder} onChange={(x) => set({ [f.name]: x })} /></FieldShell>;
     case 'links':
       return <FieldShell f={f} id={id}><LinksInput value={v ?? []} onChange={(x) => set({ [f.name]: x })} /></FieldShell>;
-    case 'teachers':
+    case 'teachers': {
+      if (f.teacherRole) {
+        // Texto libre: se guarda dentro de la columna teachers como un elemento de tipo texto
+        const all: any[] = data.teachers ?? [];
+        const isCoord = f.teacherRole === 'coordinator';
+        const mine = all.find((t) => t.text && !!t.coordinator === isCoord);
+        const others = all.filter((t) => !(t.text && !!t.coordinator === isCoord));
+        const save = (x: string) => set({ teachers: x.trim() ? [...others, { name: '', bio: x, coordinator: isCoord, text: true }] : others });
+        return <FieldShell f={f} id={id}><MarkdownInput id={id} value={mine?.bio ?? ''} rows={f.rows ?? 3} onChange={save} /></FieldShell>;
+      }
       return <FieldShell f={f} id={id}><TeachersInput value={v ?? []} onChange={(x) => set({ [f.name]: x })} /></FieldShell>;
+    }
     case 'logos':
       return <FieldShell f={f} id={id}><LogosInput value={v ?? []} onChange={(x) => set({ [f.name]: x })} /></FieldShell>;
     default:
@@ -359,7 +378,7 @@ export function validate(fields: Field[], data: Record<string, any>) {
   for (const f of fields) {
     const v = data[f.name];
     if (f.required && (v === undefined || v === null || String(v).trim() === '')) errs[f.name] = `Completá "${f.label}".`;
-    if ((f.type === 'url' || f.type === 'image' || f.type === 'pdf') && v && !/^(https?:\/\/|\/)/.test(String(v))) errs[f.name] = `"${f.label}" debe empezar con https:// o con /`;
+    if ((f.type === 'url' || f.type === 'image' || f.type === 'pdf') && v && !/^(https?:\/\/|\/|blob:|data:)/.test(String(v))) errs[f.name] = `"${f.label}" debe empezar con https:// o con /`;
     if (f.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v))) errs[f.name] = `"${f.label}" no parece un correo válido.`;
     if (f.type === 'links' && Array.isArray(v) && v.some((l: any) => l.url && !/^https?:\/\//.test(l.url))) errs[f.name] = 'Los enlaces deben empezar con https://';
   }

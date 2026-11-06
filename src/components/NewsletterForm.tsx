@@ -6,7 +6,13 @@ import { Link } from 'react-router-dom';
 
 const INTERESTS = ['Cursos', 'Artículos', 'Publicaciones'];
 
-export function NewsletterForm({ variant = 'band', showInterests = false }: { variant?: 'band' | 'compact' | 'card'; showInterests?: boolean }) {
+/**
+ * topic: qué recibe quien se anota desde este formulario.
+ *  - 'cursos': solo avisos de cursos nuevos.
+ *  - 'articulos': artículos (y publicaciones) + cursos.
+ *  - 'general' (pie de página y otros): artículos (y publicaciones) + cursos.
+ */
+export function NewsletterForm({ variant = 'band', showInterests = false, heading, text, topic = 'general' }: { variant?: 'band' | 'compact' | 'card' | 'footer' | 'strip'; showInterests?: boolean; heading?: string; text?: string; topic?: 'cursos' | 'articulos' | 'general' }) {
   const { settings } = useSettings();
   const n = settings.newsletter;
   const [email, setEmail] = useState('');
@@ -17,6 +23,12 @@ export function NewsletterForm({ variant = 'band', showInterests = false }: { va
   const [state, setState] = useState<{ kind: 'idle' | 'sending' | 'ok' | 'error'; msg?: string }>({ kind: 'idle' });
   const id = variant + Math.random().toString(36).slice(2, 6);
 
+  function topicInterests() {
+    const base = new Set<string>(['Cursos', ...interests]);
+    if (topic !== 'cursos') base.add('Artículos');
+    return Array.from(base);
+  }
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setState({ kind: 'error', msg: 'Revisá el correo: parece incompleto.' });
@@ -24,7 +36,7 @@ export function NewsletterForm({ variant = 'band', showInterests = false }: { va
     setState({ kind: 'sending' });
     try {
       const r = await callFunction<{ message: string }>('newsletter', {
-        action: 'subscribe', email: email.trim(), name: name.trim(), interests, consent: n.consent, website: hp,
+        action: 'subscribe', email: email.trim(), name: name.trim(), interests: topicInterests(), consent: n.consent, website: hp,
       });
       setState({ kind: 'ok', msg: r.message });
     } catch (err) {
@@ -32,7 +44,7 @@ export function NewsletterForm({ variant = 'band', showInterests = false }: { va
     }
   }
 
-  const dark = variant === 'band';
+  const dark = variant === 'band' || variant === 'footer';
   if (state.kind === 'ok') {
     return (
       <div role="status" className={`flex items-start gap-3 rounded-xl p-4 ${dark ? 'bg-white/10 text-white' : 'bg-petrol-soft text-petrol-deep'}`}>
@@ -42,9 +54,43 @@ export function NewsletterForm({ variant = 'band', showInterests = false }: { va
     );
   }
 
+  const consentBox = (
+    <label className={`flex items-start gap-2 text-xs leading-snug ${dark ? 'text-white/75' : 'text-mute'}`}>
+      <input type="checkbox" className="mt-0.5 accent-orange" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+      <span>{n.consent} <Link to="/privacidad" className={dark ? 'underline' : 'link'}>Aviso de privacidad</Link>.</span>
+    </label>
+  );
+
+  if (variant === 'strip') {
+    // Franja: texto a la izquierda y correo + botón a la derecha, alineados al centro; consentimiento debajo.
+    return (
+      <form onSubmit={submit} noValidate className="grid gap-x-10 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-center">
+        <div>
+          {heading && <h2 className="h-display text-xl text-petrol-deep">{heading}</h2>}
+          {text && <p className="mt-1 text-sm text-ink-soft">{text}</p>}
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <label htmlFor={id + 'e'} className="sr-only">Correo electrónico</label>
+            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
+            <input id={id + 'e'} type="email" required className="input pl-9" placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          </div>
+          <input tabIndex={-1} aria-hidden className="hidden" value={hp} onChange={(e) => setHp(e.target.value)} name="website" autoComplete="off" />
+          <button className="btn-dark" disabled={state.kind === 'sending'}>{state.kind === 'sending' ? 'Enviando…' : n.button}</button>
+        </div>
+        <div className="lg:col-start-2">
+          {consentBox}
+          {state.kind === 'error' && (
+            <p role="alert" className="mt-2 flex items-center gap-2 text-sm text-red-700"><AlertCircle className="h-4 w-4" aria-hidden /> {state.msg}</p>
+          )}
+        </div>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={submit} noValidate className="space-y-3">
-      <div className={`flex flex-col gap-2 ${variant === 'compact' ? '' : 'sm:flex-row'}`}>
+      <div className={`flex flex-col gap-2 ${variant === 'compact' || variant === 'footer' ? '' : 'sm:flex-row'}`}>
         {showInterests && (
           <div className="sm:w-44">
             <label htmlFor={id + 'n'} className="sr-only">Nombre (opcional)</label>

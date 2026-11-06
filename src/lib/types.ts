@@ -11,7 +11,7 @@ export interface Base {
 
 export interface FileRef { name: string; url: string }
 export interface LinkRef { label: string; url: string }
-export interface Teacher { name: string; bio?: string; photo_url?: string }
+export interface Teacher { name: string; bio?: string; photo_url?: string; coordinator?: boolean; text?: boolean }
 
 export interface Article extends Base {
   slug: string; title: string; excerpt: string | null; summary: string | null; body: string | null;

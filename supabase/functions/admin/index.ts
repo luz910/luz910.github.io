@@ -83,9 +83,9 @@ function unsubLinks(site: string, s: any) {
 
 /* -------------------------------------------- avisos automáticos de novedades */
 const TYPES = {
-  article: { table: 'articles', path: 'articulos', title: 'title', image: 'cover_url', desc: (r: any) => r.excerpt || mdToText(r.summary ?? '').slice(0, 260), kicker: 'Nuevo artículo', cta: 'Leer el artículo', setting: 'auto_article' },
-  course: { table: 'courses', path: 'cursos', title: 'title', image: 'cover_url', desc: (r: any) => r.short_description || mdToText(r.description ?? '').slice(0, 260), kicker: 'Nuevo curso', cta: 'Ver el curso', setting: 'auto_course' },
-  publication: { table: 'publications', path: 'publicaciones', title: 'title', image: 'thumbnail_url', desc: (r: any) => mdToText(r.abstract ?? '').slice(0, 260) || [r.authors, r.source].filter(Boolean).join(' · '), kicker: 'Nueva publicación', cta: 'Ver la publicación', setting: 'auto_publication' },
+  article: { table: 'articles', path: 'articulos', title: 'title', image: 'cover_url', desc: (r: any) => r.excerpt || mdToText(r.summary ?? '').slice(0, 260), kicker: 'Nuevo artículo', cta: 'Leer el artículo', setting: 'auto_article', audience: 'Artículos' },
+  course: { table: 'courses', path: 'cursos', title: 'title', image: 'cover_url', desc: (r: any) => r.short_description || mdToText(r.description ?? '').slice(0, 260), kicker: 'Nuevo curso', cta: 'Ver el curso', setting: 'auto_course', audience: null },
+  publication: { table: 'publications', path: 'publicaciones', title: 'title', image: 'thumbnail_url', desc: (r: any) => mdToText(r.abstract ?? '').slice(0, 260) || [r.authors, r.source].filter(Boolean).join(' · '), kicker: 'Nueva publicación', cta: 'Ver la publicación', setting: 'auto_publication', audience: 'Artículos' },
 } as const;
 
 async function dispatch(db: DB) {
@@ -101,7 +101,8 @@ async function dispatch(db: DB) {
     const { data: rows } = await db.from(t.table).select('id,title').eq('status', 'published').lte('published_at', now).gte('published_at', since)
       .order('published_at', { ascending: false }).limit(50);
     if (!rows?.length) continue;
-    const enabled = !!nl[t.setting];
+    // Los avisos se envían siempre: los cursos a todos los suscriptores; artículos y publicaciones solo a quienes los pidieron.
+    const enabled = true;
     await db.from('notifications').upsert(
       rows.map((r: any) => ({ content_type: type, content_id: r.id, title: r.title, status: enabled ? 'sending' : 'skipped', error: enabled ? null : 'Envío automático desactivado para este tipo de contenido', locked_at: new Date(0).toISOString(), finished_at: enabled ? null : now })),
       { onConflict: 'content_type,content_id', ignoreDuplicates: true },
@@ -133,8 +134,8 @@ async function dispatch(db: DB) {
         html: layout({ site, preheader: desc, kicker: t.kicker, heading: item[t.title], imageUrl: item[t.image], bodyHtml: desc ? `<p style="margin:0 0 16px">${mdToHtml(desc).replace(/^<p[^>]*>|<\/p>$/g, '')}</p>` : '', ctaLabel: t.cta, ctaUrl: link, footerNote: 'Recibís este correo porque te suscribiste a las novedades de BIOQUNS.', unsubscribeUrl: unsubLinks(site, s).unsubscribeUrl }),
         text: `${t.kicker}: ${item[t.title]}\n\n${desc}\n\n${link}\n\nCancelar suscripción: ${unsubLinks(site, s).unsubscribeUrl}`,
         ...unsubLinks(site, s),
-      }));
-      await db.from('notifications').update({ status: sent ? 'sent' : 'skipped', error: sent ? null : 'No había suscriptores activos', finished_at: new Date().toISOString() }).eq('id', n.id);
+      }), undefined, t.audience);
+      await db.from('notifications').update({ status: sent ? 'sent' : 'skipped', error: sent ? null : (t.audience ? 'No había suscriptores que pidieran artículos' : 'No había suscriptores activos'), finished_at: new Date().toISOString() }).eq('id', n.id);
       results.push(`"${item[t.title]}": enviado a ${sent}`);
     } catch (e) {
       await db.from('notifications').update({ status: 'partial', error: (e as Error).message }).eq('id', n.id);

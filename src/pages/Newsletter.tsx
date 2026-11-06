@@ -1,3 +1,4 @@
+import { CONTACT } from '../components/Layout';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
@@ -79,7 +80,7 @@ export function Privacy() {
       <Seo title="Aviso de privacidad" />
       <h1 className="h-display text-4xl">Aviso de privacidad</h1>
       <Markdown className="mt-6">{settings.footer.privacy_text}</Markdown>
-      {settings.footer.email && <p className="mt-6 text-ink-soft">Para consultas sobre tus datos escribinos a <a className="link" href={`mailto:${settings.footer.email}`}>{settings.footer.email}</a>.</p>}
+      {CONTACT.email && <p className="mt-6 text-ink-soft">Para consultas sobre tus datos escribinos a <a className="link" href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>.</p>}
     </div>
   );
 }
