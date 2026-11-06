@@ -32,10 +32,10 @@ function Details({ m }: { m: Member }) {
 
 function MemberCard({ m }: { m: Member }) {
   // Tarjeta blanca con una línea azul arriba; foto redonda con borde fino, nombre en azul petróleo
-  // y cargo en mayúsculas grises. En la compu, la foto va a la izquierda del nombre.
+  // y cargo en mayúsculas grises. Siempre con la foto arriba y el nombre centrado debajo.
   return (
     <article className="flex h-full flex-col rounded-2xl border border-line border-t-[3px] border-t-petrol bg-white">
-      <div className="flex flex-col items-center gap-5 px-6 pt-8 pb-6 text-center sm:flex-row sm:text-left">
+      <div className="flex flex-col items-center gap-5 px-6 pt-8 pb-6 text-center">
         <Photo m={m} className="h-32 w-32 shrink-0 rounded-full ring-1 ring-line ring-offset-4" />
         <div>
           <h3 className="font-display text-[1.35rem] font-semibold leading-tight tracking-[-0.01em] text-petrol-deep">{m.name}</h3>
