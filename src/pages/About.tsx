@@ -11,23 +11,39 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   return <div><h4 className="text-xs font-bold uppercase tracking-[0.14em] text-petrol">{title}</h4><div className="mt-1.5">{children}</div></div>;
 }
 
-function MemberCard({ m }: { m: Member }) {
+function Photo({ m, className }: { m: Member; className: string }) {
+  return m.photo_url
+    ? <img src={m.photo_url} alt={m.photo_alt || m.name} className={`object-cover ${className}`} />
+    : <div className={`flex items-center justify-center bg-[#f1f4f5] ${className}`}><DnaSymbol spin={false} className="h-16 w-auto opacity-40" /></div>;
+}
+
+function Details({ m }: { m: Member }) {
   return (
-    <article className="card flex h-full flex-col overflow-hidden">
-      <div className="relative bg-gradient-to-br from-petrol-soft to-white px-6 pt-8 pb-6 text-center">
-        {m.photo_url
-          ? <img src={m.photo_url} alt={m.photo_alt || m.name} className="mx-auto h-40 w-40 rounded-full object-cover shadow-lg ring-4 ring-white" />
-          : <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-full bg-white shadow-inner ring-4 ring-white"><DnaSymbol spin={false} className="h-20 w-auto opacity-40" /></div>}
-        <h3 className="mt-5 font-display font-bold text-2xl text-ink">{m.name}</h3>
-        {m.role && <p className="mt-1 text-sm font-bold text-orange-deep">{m.role}</p>}
+    <>
+      {m.bio && <Markdown className="!text-[0.95rem]">{m.bio}</Markdown>}
+      {m.education && <Block title="Formación"><Markdown className="!text-sm">{m.education}</Markdown></Block>}
+      {m.career && <Block title="Trayectoria académica y profesional"><Markdown className="!text-sm">{m.career}</Markdown></Block>}
+      {m.specialties?.length > 0 && <Block title="Áreas de especialización"><div className="flex flex-wrap gap-1.5">{m.specialties.map((s) => <span key={s} className="chip bg-petrol-soft text-petrol-deep">{s}</span>)}</div></Block>}
+      {m.activities && <Block title="Docencia e investigación"><Markdown className="!text-sm">{m.activities}</Markdown></Block>}
+      {m.highlights && <Block title="Publicaciones y antecedentes destacados"><Markdown className="!text-sm">{m.highlights}</Markdown></Block>}
+    </>
+  );
+}
+
+function MemberCard({ m }: { m: Member }) {
+  // Tarjeta blanca con una línea azul arriba; foto redonda con borde fino, nombre en azul petróleo
+  // y cargo en mayúsculas grises. En la compu, la foto va a la izquierda del nombre.
+  return (
+    <article className="flex h-full flex-col rounded-2xl border border-line border-t-[3px] border-t-petrol bg-white">
+      <div className="flex flex-col items-center gap-5 px-6 pt-8 pb-6 text-center sm:flex-row sm:text-left">
+        <Photo m={m} className="h-32 w-32 shrink-0 rounded-full ring-1 ring-line ring-offset-4" />
+        <div>
+          <h3 className="font-display text-[1.35rem] font-semibold leading-tight tracking-[-0.01em] text-petrol-deep">{m.name}</h3>
+          {m.role && <p className="mt-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-mute">{m.role}</p>}
+        </div>
       </div>
-      <div className="flex-1 space-y-5 p-6 text-sm">
-        {m.bio && <Markdown className="!text-[0.95rem]">{m.bio}</Markdown>}
-        {m.education && <Block title="Formación"><Markdown className="!text-sm">{m.education}</Markdown></Block>}
-        {m.career && <Block title="Trayectoria académica y profesional"><Markdown className="!text-sm">{m.career}</Markdown></Block>}
-        {m.specialties?.length > 0 && <Block title="Áreas de especialización"><div className="flex flex-wrap gap-1.5">{m.specialties.map((s) => <span key={s} className="chip bg-petrol-soft text-petrol-deep">{s}</span>)}</div></Block>}
-        {m.activities && <Block title="Docencia e investigación"><Markdown className="!text-sm">{m.activities}</Markdown></Block>}
-        {m.highlights && <Block title="Publicaciones y antecedentes destacados"><Markdown className="!text-sm">{m.highlights}</Markdown></Block>}
+      <div className="flex-1 space-y-5 border-t border-line px-6 pt-6 pb-7 text-sm">
+        <Details m={m} />
       </div>
     </article>
   );
