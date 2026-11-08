@@ -84,7 +84,7 @@ export default function CourseDetail() {
         <div className="container-x relative py-12 sm:py-16">
           <Link to="/cursos" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white"><ArrowLeft className="h-4 w-4" aria-hidden /> Nuestros cursos</Link>
           {c.logos?.length > 0 && <div className="mt-6"><LogoStrip keys={c.logos} size="md" /></div>}
-          <h1 className="mt-5 max-w-3xl font-display font-bold text-4xl leading-tight sm:text-5xl">{c.title}</h1>
+          <h1 className="mt-5 font-display font-bold text-4xl leading-tight sm:text-5xl">{c.title}</h1>
         </div>
       </section>
 
