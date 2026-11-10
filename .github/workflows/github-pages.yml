@@ -8,6 +8,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Una vez por día se vuelve a publicar solo: así el sitemap de Google incluye lo nuevo
+  # que se cargó desde el panel (y de paso Supabase no se pausa por falta de uso).
+  schedule:
+    - cron: '17 9 * * *'
 
 permissions:
   contents: read
@@ -33,6 +37,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           VITE_EDITOR_EMAIL: ${{ vars.VITE_EDITOR_EMAIL }}
+      # Páginas para Google y redes sociales, sitemap.xml y robots.txt
+      - run: node scripts/seo-estatico.mjs
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          SITE_URL: https://bioquns.com.ar
       # Para que las direcciones internas (/cursos, /articulos/…) funcionen al recargar o compartir
       - run: cp dist/index.html dist/404.html
       - uses: actions/upload-pages-artifact@v3
