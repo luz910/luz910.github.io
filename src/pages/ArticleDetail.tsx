@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, BookOpen, CalendarDays, ExternalLink, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, Download, ExternalLink, Users } from 'lucide-react';
 import { usePublicItem, usePublicList } from '../lib/api';
 import type { Article } from '../lib/types';
 import { doiUrl, fmtDate, plainText } from '../lib/format';
@@ -25,6 +25,11 @@ function Related({ a }: { a: Article }) {
       </div>
     </section>
   );
+}
+
+/** Los archivos guardados en Supabase se descargan directo (sin abrirse en otra pestaña) agregando ?download= */
+function downloadUrl(url: string) {
+  return url.includes('/storage/v1/object/public/') && !url.includes('?') ? `${url}?download=` : url;
 }
 
 export default function ArticleDetail() {
@@ -69,10 +74,11 @@ export default function ArticleDetail() {
             <div className="mt-12 border-t border-line pt-6"><Share title={a.title} /></div>
           </div>
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-            {(doi || a.external_url) && (
+            {(doi || a.external_url || a.pdf_url) && (
               <div className="card space-y-3 p-5 text-sm">
                 <h2 className="eyebrow font-display !text-[0.8rem] !font-extrabold">Fuente</h2>
                 {doi && <p><span className="font-semibold">DOI: </span><a href={doi} className="link break-all" target="_blank" rel="noopener noreferrer">{a.doi}</a></p>}
+                {a.pdf_url && <a href={downloadUrl(a.pdf_url)} download target="_blank" rel="noopener noreferrer" className="btn-primary w-full">Descargar artículo (PDF) <Download className="h-4 w-4" aria-hidden /></a>}
                 {a.external_url && <a href={a.external_url} target="_blank" rel="noopener noreferrer" className="btn-dark w-full">Ver artículo completo <ExternalLink className="h-4 w-4" aria-hidden /></a>}
               </div>
             )}

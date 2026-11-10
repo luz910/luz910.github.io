@@ -16,7 +16,7 @@ export interface Teacher { name: string; bio?: string; photo_url?: string; coord
 export interface Article extends Base {
   slug: string; title: string; excerpt: string | null; summary: string | null; body: string | null;
   cover_url: string | null; cover_alt: string | null; authors: string | null; category: string | null;
-  tags: string[]; source: string | null; doi: string | null; external_url: string | null;
+  tags: string[]; source: string | null; doi: string | null; external_url: string | null; pdf_url?: string | null;
   references_md: string | null; featured: boolean; seo_title: string | null; seo_description: string | null;
 }
 

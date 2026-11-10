@@ -40,6 +40,7 @@ export const RESOURCES: Resource[] = [
       { name: 'source', label: 'Revista o fuente', type: 'text', section: 'Fuente' },
       { name: 'doi', label: 'DOI', type: 'text', section: 'Fuente', placeholder: '10.1000/xyz123' },
       { name: 'external_url', label: 'Enlace al artículo original', type: 'url', wide: true, section: 'Fuente', placeholder: 'https://…' },
+      { name: 'pdf_url', label: 'Artículo completo en PDF (opcional, para descargar)', type: 'pdf', pdfOnly: true, folder: 'articulos', wide: true, section: 'Fuente' },
       { name: 'tags', label: 'Palabras clave', type: 'tags', wide: true, section: 'Fuente' },
     ],
   },

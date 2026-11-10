@@ -69,6 +69,7 @@ create table if not exists public.articles (
   source          text,
   doi             text,
   external_url    text,
+  pdf_url         text,
   references_md   text,
   status          text not null default 'draft' check (status in ('draft','published','archived')),
   published_at    timestamptz,

@@ -22,6 +22,8 @@ export interface Field {
   altField?: string;
   /** Para PDF: campo donde guardar la miniatura generada automáticamente */
   thumbField?: string;
+  /** Solo acepta PDF (no imágenes) */
+  pdfOnly?: boolean;
   folder?: string;
   /** Para "relation": tabla y columna que se muestra */
   relation?: { table: string; labelCol: string };
@@ -150,7 +152,7 @@ export function ImageInput({ id, value, onChange, folder = 'imagenes' }: { id: s
 }
 
 /* ---------- Subida de PDF o imagen (con miniatura automática si es PDF) ---------- */
-function PdfInput({ id, value, onChange, onThumb, folder = 'pdf' }: { id: string; value: string; onChange: (v: string) => void; onThumb?: (v: string) => void; folder?: string }) {
+function PdfInput({ id, value, onChange, onThumb, folder = 'pdf', pdfOnly = false }: { id: string; value: string; onChange: (v: string) => void; onThumb?: (v: string) => void; folder?: string; pdfOnly?: boolean }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const ref = useRef<HTMLInputElement>(null);
@@ -158,6 +160,7 @@ function PdfInput({ id, value, onChange, onThumb, folder = 'pdf' }: { id: string
   async function pick(file: File) {
     const isPdf = file.type === 'application/pdf';
     const isImg = file.type.startsWith('image/');
+    if (pdfOnly && !isPdf) return toast.error('El archivo tiene que ser un PDF.');
     if (!isPdf && !isImg) return toast.error('El archivo tiene que ser un PDF o una imagen (JPG, PNG, WEBP).');
     try {
       setBusy('Subiendo archivo…');
@@ -187,7 +190,8 @@ function PdfInput({ id, value, onChange, onThumb, folder = 'pdf' }: { id: string
             : <span className="text-mute">Ningún archivo cargado</span>}
       </div>
       <button type="button" className="btn-outline !py-1.5 text-xs" onClick={() => ref.current?.click()} disabled={!!busy}><Upload className="h-3.5 w-3.5" />{value ? 'Reemplazar' : 'Subir archivo'}</button>
-      <input ref={ref} id={id} type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ''; }} />
+      {value && !busy && <button type="button" className="btn-ghost !py-1.5 text-xs text-red-700" onClick={() => { onChange(''); setName(null); }}><X className="h-3.5 w-3.5" />Quitar</button>}
+      <input ref={ref} id={id} type="file" accept={pdfOnly ? 'application/pdf' : 'application/pdf,image/*'} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ''; }} />
     </div>
   );
 }
@@ -343,7 +347,7 @@ export function FieldInput({ f, data, set, relations }: { f: Field; data: Record
     case 'image':
       return <FieldShell f={f} id={id}><ImageInput id={id} value={str} folder={f.folder} onChange={(x) => set({ [f.name]: x })} alt={f.altField ? data[f.altField] : undefined} onAlt={f.altField ? (x) => set({ [f.altField!]: x }) : undefined} /></FieldShell>;
     case 'pdf':
-      return <FieldShell f={f} id={id}><PdfInput id={id} value={str} folder={f.folder} onChange={(x) => set({ [f.name]: x })} onThumb={f.thumbField ? (x) => set({ [f.thumbField!]: x }) : undefined} /></FieldShell>;
+      return <FieldShell f={f} id={id}><PdfInput id={id} value={str} folder={f.folder} pdfOnly={f.pdfOnly} onChange={(x) => set({ [f.name]: x })} onThumb={f.thumbField ? (x) => set({ [f.thumbField!]: x }) : undefined} /></FieldShell>;
     case 'files':
       return <FieldShell f={f} id={id}><FilesInput value={v ?? []} folder={f.folder} onChange={(x) => set({ [f.name]: x })} /></FieldShell>;
     case 'links':

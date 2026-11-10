@@ -23,6 +23,7 @@ alter table if exists public.articles add column if not exists tags text[] not n
 alter table if exists public.articles add column if not exists source text;
 alter table if exists public.articles add column if not exists doi text;
 alter table if exists public.articles add column if not exists external_url text;
+alter table if exists public.articles add column if not exists pdf_url text;
 alter table if exists public.articles add column if not exists references_md text;
 alter table if exists public.articles add column if not exists status text not null default 'draft' check (status in ('draft','published','archived'));
 alter table if exists public.articles add column if not exists published_at timestamptz;
@@ -276,6 +277,7 @@ create table if not exists public.articles (
   source          text,
   doi             text,
   external_url    text,
+  pdf_url         text,
   references_md   text,
   status          text not null default 'draft' check (status in ('draft','published','archived')),
   published_at    timestamptz,
