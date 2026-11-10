@@ -30,9 +30,9 @@ function Hero() {
   }, [heroSrc]);
   return (
     <section className={`relative overflow-hidden bg-white ${ready ? '' : 'hero-wait'}`}>
-      {/* Imagen de fondo (editable desde el panel) con un velo blanco para que el texto se lea bien */}
-      <img src={heroSrc} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center hero-zoom" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.93)_0%,rgba(255,255,255,0.87)_50%,rgba(255,255,255,0.8)_100%)]" aria-hidden />
+      {/* Foto de fondo con menos brillo y menos naranja, y un velo blanco parejo para que se lea el texto */}
+      <img src={heroSrc} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center hero-zoom [filter:brightness(0.87)_contrast(0.95)_saturate(0.68)]" />
+      <div className="pointer-events-none absolute inset-0 bg-white/78" aria-hidden />
       <div className="container-x relative flex flex-col items-center pb-16 pt-16 text-center sm:pb-20 sm:pt-24">
         <h1 className="flex items-center justify-center gap-3 sm:gap-5">
           <span className="hero-in hero-word brand-gradient font-display text-[clamp(2.7rem,11vw,7.5rem)] font-extrabold leading-none tracking-[-0.02em]">BIOQUNS</span>
@@ -40,7 +40,7 @@ function Hero() {
           {h.hero_title && <span className="sr-only">: {h.hero_title}</span>}
         </h1>
         {h.hero_title && <p aria-hidden className="hero-in [animation-delay:450ms] mt-6 max-w-4xl font-display text-[clamp(1.5rem,3.6vw,2.6rem)] font-bold leading-tight text-brown">{h.hero_title}</p>}
-        {h.hero_text && <p className="hero-in [animation-delay:650ms] mt-6 max-w-3xl text-lg leading-relaxed text-mute sm:text-xl">{h.hero_text}</p>}
+        {h.hero_text && <p className="hero-in [animation-delay:650ms] mt-6 max-w-3xl text-lg font-medium leading-relaxed text-ink sm:text-xl">{h.hero_text}</p>}
         {(h.hero_primary_label || h.hero_secondary_label) && (
           <div className="hero-in [animation-delay:850ms] mt-9 flex flex-wrap justify-center gap-3">
             {h.hero_primary_label && <Link to={h.hero_primary_url || '/cursos'} className="btn-primary px-6 py-3">{h.hero_primary_label} <ArrowRight className="h-4 w-4" aria-hidden /></Link>}
