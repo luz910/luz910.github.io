@@ -46,7 +46,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   newsletter: {
     title: 'Recibí novedades de BIOQUNS',
     text: 'Sé un profesional actualizado. Recibí novedades del ámbito bioquímico, contenidos de interés profesional y todas las novedades sobre nuestros próximos cursos y actividades de formación.',
-    button: 'Suscribirme', consent: 'Acepto recibir correos de BIOQUNS con novedades. Puedo darme de baja en cualquier momento.',
+    button: 'Suscribirme', consent: 'Acepto recibir novedades de BIOQUNS.',
     auto_article: true, auto_course: true, auto_publication: false,
   },
 };

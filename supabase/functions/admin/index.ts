@@ -2,7 +2,7 @@
 // Toda acción exige un editor autenticado (JWT verificado aquí) o, para "dispatch", el secreto del cron.
 import { adminClient, cors, EMAIL_RE, getSettings, json, siteUrl } from '../_shared/env.ts';
 import { mailConfig, MailError, sendOne, type Mail } from '../_shared/mail.ts';
-import { layout, mdToHtml, mdToText } from '../_shared/templates.ts';
+import { courseEmail, layout, mdToHtml, mdToText } from '../_shared/templates.ts';
 import { sendToAll } from '../_shared/broadcast.ts';
 
 type DB = ReturnType<typeof adminClient>;
@@ -128,7 +128,11 @@ async function dispatch(db: DB) {
     const link = `${site}/${t.path}/${item.slug}`;
     const desc = t.desc(item);
     try {
-      const sent = await sendToAll(db, 'notifications', claimed, (s) => ({
+      const sent = await sendToAll(db, 'notifications', claimed, (s) => n.content_type === 'course' ? ({
+        to: s.email,
+        ...courseEmail(item, site, link, unsubLinks(site, s).unsubscribeUrl),
+        ...unsubLinks(site, s),
+      }) : ({
         to: s.email,
         subject: `${t.kicker}: ${item[t.title]}`,
         html: layout({ site, preheader: desc, kicker: t.kicker, heading: item[t.title], imageUrl: item[t.image], bodyHtml: desc ? `<p style="margin:0 0 16px">${mdToHtml(desc).replace(/^<p[^>]*>|<\/p>$/g, '')}</p>` : '', ctaLabel: t.cta, ctaUrl: link, footerNote: 'Recibís este correo porque te suscribiste a las novedades de BIOQUNS.', unsubscribeUrl: unsubLinks(site, s).unsubscribeUrl }),

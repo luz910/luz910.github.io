@@ -32,7 +32,7 @@ export function NewsletterForm({ variant = 'band', showInterests = false, headin
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setState({ kind: 'error', msg: 'Revisá el correo: parece incompleto.' });
-    if (!consent) return setState({ kind: 'error', msg: 'Necesitamos tu consentimiento para enviarte correos.' });
+    if (!consent) return setState({ kind: 'error', msg: 'Marcá la casilla para suscribirte.' });
     setState({ kind: 'sending' });
     try {
       const r = await callFunction<{ message: string }>('newsletter', {
@@ -57,7 +57,7 @@ export function NewsletterForm({ variant = 'band', showInterests = false, headin
   const consentBox = (
     <label className={`flex items-start gap-2 text-xs leading-snug ${dark ? 'text-white/75' : 'text-mute'}`}>
       <input type="checkbox" className="mt-0.5 accent-orange" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-      <span>{n.consent} <Link to="/privacidad" className={dark ? 'underline' : 'link'}>Aviso de privacidad</Link>.</span>
+      <span>Acepto recibir novedades. <Link to="/privacidad" className={dark ? 'underline' : 'link'}>Aviso de privacidad</Link></span>
     </label>
   );
 
@@ -121,7 +121,7 @@ export function NewsletterForm({ variant = 'band', showInterests = false, headin
       )}
       <label className={`flex items-start gap-2 text-xs leading-snug ${dark ? 'text-white/75' : 'text-mute'}`}>
         <input type="checkbox" className="mt-0.5 accent-orange" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>{n.consent} <Link to="/privacidad" className={dark ? 'underline' : 'link'}>Aviso de privacidad</Link>.</span>
+        <span>Acepto recibir novedades. <Link to="/privacidad" className={dark ? 'underline' : 'link'}>Aviso de privacidad</Link></span>
       </label>
       {state.kind === 'error' && (
         <p role="alert" className={`flex items-center gap-2 text-sm ${dark ? 'text-orange-soft' : 'text-red-700'}`}>
